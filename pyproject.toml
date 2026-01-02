@@ -1,0 +1,19 @@
+[project]
+name = "curvepy"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Noah Munro-Kagan"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy (>=2.4.0,<3.0.0)",
+    "matplotlib (>=3.10.8,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
