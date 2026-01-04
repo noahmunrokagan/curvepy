@@ -100,6 +100,23 @@ def get_wedge_slope_ranges(scale_idx: int) -> np.ndarray:
     
     return slope_boundaries
 
+
+class CurveletFrequencyGrid():
+    def __init__(self, N: int, scales: int, base_wedges):
+        self.N = N
+        self.scales = scales
+        self.base_wedges = base_wedges
+
+        #pre compute grid
+        self.Y, self.X = np.mgrid[-N//2:N//2, -N//2:N//2]
+        self.Slopes_EW = self.Y / self.X
+        self.Slopes_NS = self.X / self.Y
+        self.Quadrants = {
+            "East": (self.X > 0) & (np.abs(self.Y) <= self.X)
+        }
+
+
+        
 # if __name__ == "__main__":
 #     N = 512
 #     total_scales = 8
