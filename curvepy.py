@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Standard Curvelet setups usually use 8 wedges per quadrant at the 2nd coarse scale
-DEFAULT_WEDGES = 8
+DEFAULT_WEDGES = 4
 
 class CurveletFrequencyGrid():
     def __init__(self, N: int, scales: int):
@@ -132,26 +132,30 @@ class CurveletFrequencyGrid():
 
 # --- VISUALIZATION ---
 if __name__ == "__main__":
-    # N=512, 5 scales
-    # Scale 0: 32x32 center
-    # Scale 1: 64x64 corona
-    # Scale 2: 128x128 corona
-    # ...
-    fdct = CurveletFrequencyGrid(N=512, scales=5)
+    # Use scales=6 for 512x512 to match the paper's 'tight' center
+    # Use 4 wedges per quadrant (16 total) as the base to match the paper's coarse scale
+    fdct = CurveletFrequencyGrid(N=512, scales=6) 
     
     print("Building Grid...")
     all_wedges = fdct.build_grid()
-    print(f"Generated {len(all_wedges)} wedges.")
     
-    # Visualization: Assign a random ID to each wedge to see them clearly
+    # VISUALIZATION FIX:
+    # Use random colors so neighbors don't blend together
     viz_map = np.zeros((512, 512))
     
+    # Shuffle indices to ensure random colors
+    # We add 10 to start above 0 (background)
+    import random
+    indices = list(range(len(all_wedges)))
+    random.shuffle(indices)
+
     for i, mask in enumerate(all_wedges):
-        # Assign a unique color (integer ID) to this wedge
-        viz_map[mask] = i + 1 
+        # Assign a random discrete value
+        viz_map[mask] = indices[i] + 10 
         
     plt.figure(figsize=(10, 10))
-    plt.title("Curvelet Frequency Tiling (Wedges)")
-    plt.imshow(viz_map, cmap='tab20b', origin='upper') # 'origin' matches matrix indexing
-    plt.colorbar()
+    plt.title("Curvelet Frequency Tiling (Corrected Viz)")
+    # 'nipy_spectral' is a high-contrast rainbow map
+    plt.imshow(viz_map, cmap='nipy_spectral', origin='upper') 
+    plt.axis('off')
     plt.show()
