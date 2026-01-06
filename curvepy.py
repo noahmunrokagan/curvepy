@@ -159,7 +159,7 @@ class CurveletFrequencyGrid():
         return (row_start, row_end), (col_start, col_end)
 
 
-    def _get_corona_mask(self, scale_idx: int, total_scales: int) -> np.ndarray:
+    def _get_corona_mask(self, scale_idx: int) -> np.ndarray:
         """
         Creates a binary mask (1 inside the shell, 0 outside) for visualization.
 
@@ -190,7 +190,59 @@ class CurveletFrequencyGrid():
             mask[inner_rows[0]:inner_rows[1], inner_cols[0]:inner_cols[1]] = 0
 
         return mask
+    
+    def _get_wedge_slope_ranges(self, scale_idx: int) -> np.ndarray:
+        """
+        Returns a list of slope boundaries for the 'East' Quadrant at a given scale. Other quadrant boundaries can be found from this array.
+        """
+        
+        # 1. Handle the Coarse Scale Exception
+        if scale_idx == 0:
+            return None
 
+        # Number of wedges with parabolic scaling
+        steps = int(np.floor(scale_idx / 2))
+        num_wedges = BASE_WEDGES * (2 ** steps)
+
+        # Slope ranges
+        min_slope = -1.0
+        max_slope = +1.0
+        
+        # Generate boundaries
+        slope_boundaries = np.linspace(min_slope, max_slope, num_wedges + 1)
+        
+        return slope_boundaries
+
+    def build_grid(self):
+        all_masks = []
+        
+        for scale in range(len(self.scales)):
+            if scale == 0:
+                # Just the center square
+                all_masks.append(self._get_corona_mask(0))
+                continue
+
+            # 1. Get the Ring
+            ring_mask = self._get_corona_mask(scale)
+            
+            # 2. Get the Slope Boundaries
+            boundaries = self._get_wedge_slope_ranges(scale)
+            
+            # 3. Cut wedges in all 4 Quadrants
+            for quadrant in ['East', 'West', 'North', 'South']:
+                # Determine which slope grid to use (EW or NS)
+                current_slopes = self.Slopes_EW if quadrant == ("East" or "West") else self.Slopes_NS #(IF East/West USE self.Slopes_EW ELSE self.Slopes_NS)
+                
+                # Digitize (bin) the slopes
+                wedge_ids = np.digitize(current_slopes, boundaries)
+                
+                # Create a mask for each wedge bin
+                for bin_id in range(len(wed)):
+                    wedge = (wedge_ids == bin_id) and quadrant_mask and ring_mask
+
+                    all_masks.append(wedge)
+
+        return all_masks
 
         
 # if __name__ == "__main__":
