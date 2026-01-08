@@ -10,7 +10,7 @@ class CurveletFrequencyGrid():
         self.N = N
         self.scales = scales
         
-        # 1. Coordinate Grid (Use float to avoid integer division issues)
+        # Coordinate Grid (Use float to avoid integer division issues)
         # We use a slight offset or 'eps' to avoid division by zero errors in Slopes
         self.Y, self.X = np.mgrid[-N//2:N//2, -N//2:N//2].astype(float)
         
@@ -25,7 +25,6 @@ class CurveletFrequencyGrid():
         self.Slopes_NS = self.X / self.Y
 
         # 2. Quadrant Masks
-        # Note the use of bitwise '&' and parens
         self.Quadrants = {
             "East":  (self.X > 0) & (np.abs(self.Y) <= self.X),
             "West":  (self.X < 0) & (np.abs(self.Y) <= np.abs(self.X)),
@@ -104,19 +103,19 @@ class CurveletFrequencyGrid():
         Returns the Soft Wedge Filter for a specific scale and wedge index.
         Handles mapping global index -> Quadrant -> Slope.
         """
-        # 1. Get Radial Donut
+        # Get Radial Donut
         radial_mask = self.get_radial_window(scale_idx)
         
         # If scale 0 (Center), just return the radial mask (low pass)
         if scale_idx == 0:
             return radial_mask
 
-        # 2. Determine Wedge Slope Bounds
+        # Determine Wedge Slope Bounds
         boundaries = self._get_wedge_slope_ranges(scale_idx)
         # boundaries has N+1 items for N wedges.
         wedges_per_quadrant = len(boundaries) - 1
         
-        # 3. Map Global Index to Quadrant & Slope
+        # Map Global Index to Quadrant & Slope
         # We assume standard counter-clockwise order: East -> North -> West -> South
         quad_names = ["East", "North", "West", "South"]
         
@@ -129,7 +128,7 @@ class CurveletFrequencyGrid():
 
         quadrant = quad_names[quad_idx]
         
-        # 4. Get Slope Range
+        # Get Slope Range
         # Note: Slope definition might need reversal for certain quadrants to maintain
         # continuous rotation, but for visualization, direct mapping is fine.
         s_min = boundaries[slope_idx]
@@ -149,6 +148,131 @@ class CurveletFrequencyGrid():
         steps = int((scale_idx - 1) // 2) 
         num_wedges = DEFAULT_WEDGES * (2 ** steps)
         return np.linspace(-1.0, 1.0, int(num_wedges) + 1)
+    
+    def get_wedge_dimensions(self, scale_idx):
+        """
+        Returns optimal (L1, L2) rectangle size for a wedge at this scale.
+        L1 is 'Lengeth' (radial), L2 is 'Width' (Angular)
+        """
+        if scale_idx == 0:
+            # Coarse scale is just a square in the center
+            # Pad slightly for safety
+            radius, _ = self._get_scale_bounds(0)
+            dimension = (radius * 2) + 1
+            return dimension, dimension
+        
+        # We use parabolic scaling for finer scales
+        inverse_scale_idx = (self.scales - 1) - scale_idx
+
+        # Dimensions derived from Candès et al. 2005
+        L1 = 4 * self.N // (2 ** (inverse_scale_idx + 2))
+        L2 = self.N // (2 ** (inverse_scale_idx//2 + 1)) # Parabolic scaling
+
+        return int(L1), int(L2)
+    
+    def wrap_wedge(self, wedge_data, scale_idx, wedge_idx):
+        """
+        Cuts out the "glowing trapezoid" and wraps it into rectangle L1 x L2
+        
+        :param self: Description
+        :param wedge_data: Description
+        :param scale_idx: Description
+        :param wedge_idx: Description
+        """
+        L1, L2 = self.get_wedge_dimensions(scale_idx)
+
+        # Find the approximate center of the wedge (to be changed later)
+        arg_max = np.unravel_index(np.argmax(wedge_data), wedge_data.shape)
+        cy, cx = arg_max # Indices of max value in rectangle
+
+        # Roll the image so the centre is at (0, 0) so that (cx, cy) is at (L1//2, L2//2)
+        shift_x = (L2 // 2) - cx
+        shift_y = (L1 // 2) - cy
+
+        # Handle wrapping with np.roll
+        wrapped_data = np.roll(wedge_data, shift_y, axis=0)
+        wrapped_data = np.roll(wrapped_data, shift_x, axis=1)
+
+        # Cut out rectangle, handle indices moved by np.roll
+        shift_x_center = (self.N // 2) - cx
+        shift_y_center = (self.N // 2) - cy
+
+        centered_data = np.roll(wedge_data, shift_y_center, axis=0)
+        centered_data = np.roll(centered_data, shift_x_center, axis=1)
+
+        # Slice middle pixels
+        start_x = (self.N // 2) - (L2 // 2)
+        start_y = (self.N // 2) - (L1 // 2)
+
+        small_wedge = centered_data[start_y:start_y + L1, start_x:start_x + L2]
+
+        return small_wedge
+    
+
+
+
+
+
+    def forward_transform(self, image):
+        """
+        Perform fast discrete curvelet transform via wrapping
+        """
+        # Compute 2-D array fast fourier transform, and shift it (since our grid has (0,0) at the centre)
+        image_frequency = np.fft.fftshift(np.fft.fft2(image))
+
+        coefficients = []
+        for scale_idx in range(self.scales):
+            scale_coefficients = []
+
+            # Low-pass
+            if scale_idx == 0:
+                mask = self.get_wedge_filter(0, 0)
+                data = image_frequency * mask
+
+                dimensions = self.get_wedge_dimensions(0) # Returns L x L for coarse rectangle
+
+                # Cut out center (image already centered so crop is simple)
+                center_y, center_x = self.N // 2, self.N // 2
+                radius = dimensions[0] // 2
+
+                # Get slice indices
+                s_row = slice(center_y - radius, center_y + radius + 1)
+                s_col = slice(center_x - radius, center_x + radius + 1)
+
+                wrapped_data = data[s_row, s_col]
+
+                # Inverse fast fourier transformation back to spatial dimensions
+                # Note: we shift back since we shifted to start
+
+                coeffs = np.fft.ifft2(np.fft.ifftshift(wrapped_data))
+                scale_coefficients.append(coeffs)
+                coefficients.append(scale_coefficients)
+                continue
+
+            # Handle wedges (scales 1 -> N-1)
+            boundaries = self._get_wedge_slope_ranges(scale_idx)
+
+            # Total wedges = 4 quadrants * wedges per quadrant
+            num_wedges = (len(boundaries) - 1) * 4
+
+            for wedge_idx in range(num_wedges):
+                # Generate mask
+                mask = self.get_wedge_filter(scale_idx, wedge_idx)
+
+                # Apply mask
+                wedge_data = image_frequency * mask
+
+                # Wrap data
+                wrapped_data = self.wrap_wedge(wedge_data, scale_idx, wedge_idx) # Tiny rectangle centered at (0, 0)
+
+                # Inverse transformation
+                coeffs = np.fft.ifft2(np.fft.ifftshift(wrapped_data))
+
+                scale_coefficients.append(coeffs)
+
+            coefficients.append(scale_coefficients)
+
+        return coefficients
 
 # --- VISUALIZATION ---
 if __name__ == "__main__":
