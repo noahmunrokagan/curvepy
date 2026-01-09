@@ -134,13 +134,13 @@ class CurveletFrequencyGrid():
         s_min = boundaries[slope_idx]
         s_max = boundaries[slope_idx+1]
         
-        # 5. Get Angular Beam
+        # Get Angular Beam
         angular_mask = self.get_angular_window(quadrant, s_min, s_max)
         
-        # 6. Get Quadrant Hard Mask (To cut off the wrap-around slopes)
+        # Get Quadrant Hard Mask (To cut off the wrap-around slopes)
         quadrant_mask = self.Quadrants[quadrant]
         
-        # 7. Combine
+        # Combine
         return radial_mask * angular_mask * quadrant_mask
     
     def _get_wedge_slope_ranges(self, scale_idx: int):
@@ -182,16 +182,9 @@ class CurveletFrequencyGrid():
         L1, L2 = self.get_wedge_dimensions(scale_idx)
 
         # Find the approximate center of the wedge (to be changed later)
-        arg_max = np.unravel_index(np.argmax(wedge_data), wedge_data.shape)
+        mask = self.get_wedge_filter(scale_idx, wedge_idx)
+        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
         cy, cx = arg_max # Indices of max value in rectangle
-
-        # Roll the image so the centre is at (0, 0) so that (cx, cy) is at (L1//2, L2//2)
-        shift_x = (L2 // 2) - cx
-        shift_y = (L1 // 2) - cy
-
-        # Handle wrapping with np.roll
-        wrapped_data = np.roll(wedge_data, shift_y, axis=0)
-        wrapped_data = np.roll(wrapped_data, shift_x, axis=1)
 
         # Cut out rectangle, handle indices moved by np.roll
         shift_x_center = (self.N // 2) - cx
@@ -208,10 +201,36 @@ class CurveletFrequencyGrid():
 
         return small_wedge
     
+    def unwrap_wedge(self, wrapped_data, scale_idx, wedge_idx):
+        """
+        Reverses the wrapping
+        Puts the small L1xL2 wedge back into the N x N grid.
+        """
+        L1, L2 = wrapped_data.shape
 
+        # Create the target grid
+        big_grid = np.zeros((self.N, self.N), dtype=complex)
 
+        # Place small wedge in center of grid
+        start_y = (self.N // 2) - (L1 // 2)
+        start_x = (self.N // 2) - (L2 // 2)
 
+        big_grid[start_y:start_y + L1, start_x:start_x + L2]
 
+        # Determine shift
+        mask = self.get_wedge_filter(scale_idx, wedge_idx)
+        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
+        cy, cx = arg_max
+
+        shift_y_center = (self.N // 2) - cy
+        shift_x_center = (self.N // 2) - cx
+
+        # Unroll
+        unwraped_grid = np.roll(big_grid, -shift_y_center, axis=0)
+        unwraped_grid = np.roll(unwraped_grid, -shift_x_center, axis=1)
+
+        return unwraped_grid
+    
 
     def forward_transform(self, image):
         """
@@ -273,6 +292,69 @@ class CurveletFrequencyGrid():
             coefficients.append(scale_coefficients)
 
         return coefficients
+    
+    def inverse_transform(self, coefficients):
+        """
+        Performs inverse fast discrete curvelet transform via wrapping
+        
+        INPUTS:
+        coefficients: List of lists 'coefficients' from forward_transform
+        
+        OUTPUT:
+        (N, N) reconstructed image
+        """
+
+        reconstructed_frequency = np.zeros((self.N, self.N), dtype=complex)
+
+        for j, scale_coeffs in enumerate(coefficients):
+
+            if j == 0:
+                # FFT to get back to frequency
+                data = scale_coeffs[0]
+                frequency_data = np.fft.fftshift(np.fft.fft2(data))
+
+                # Uncrop to get back to center
+                L = frequency_data.shape[0]
+                temporary_grid = np.zeros((self.N, self.N), dtype=complex)
+
+                center = self.N // 2
+                radius = L // 2
+
+                s_row = slice(center - radius, center + radius + 1)
+                s_col = slice(center - radius, center + radius + 1)
+
+                # Handle odd/even shape mismatch
+                temporary_grid[s_row, s_col] = frequency_data
+
+                # Apply window
+                mask = self.get_wedge_filter(0, 0)
+                reconstructed_frequency += temporary_grid * mask
+                continue
+
+            # Handle wedges
+            num_wedges = len(scale_coeffs)
+
+            for wedge_idx in range(num_wedges):
+                # FFT coefficients to get to frequency
+                spatial_data = scale_coeffs[wedge_idx]
+
+                # Shift to center
+                wrapped_frequency = np.fft.fftshift(np.fft.fft2(spatial_data))
+
+                # Unwrap
+                unwrapped_frequency = self.unwrap_wedge(wrapped_frequency, j, wedge_idx)
+
+                # Apply window
+                mask = self.get_wedge_filter(j, wedge_idx)
+                reconstructed_frequency += unwrapped_frequency * mask
+            
+        # Final inverse transform
+        reconstructed_image = np.fft.ifft2(np.fft.ifftshift(reconstructed_frequency))
+
+        return np.real(reconstructed_image)
+
+
+
 
 # --- VISUALIZATION ---
 if __name__ == "__main__":
