@@ -170,6 +170,12 @@ class CurveletFrequencyGrid():
 
         return int(L1), int(L2)
     
+    def _get_wedge_center(self, scale_idx, wedge_idx):
+        """Calculates the geometric center of the wedge using the MASK."""
+        mask = self.get_wedge_filter(scale_idx, wedge_idx)
+        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
+        return arg_max # (cy, cx)
+    
     def wrap_wedge(self, wedge_data, scale_idx, wedge_idx):
         """
         Cuts out the "glowing trapezoid" and wraps it into rectangle L1 x L2
@@ -182,9 +188,7 @@ class CurveletFrequencyGrid():
         L1, L2 = self.get_wedge_dimensions(scale_idx)
 
         # Find the approximate center of the wedge (to be changed later)
-        mask = self.get_wedge_filter(scale_idx, wedge_idx)
-        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
-        cy, cx = arg_max # Indices of max value in rectangle
+        cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
 
         # Cut out rectangle, handle indices moved by np.roll
         shift_x_center = (self.N // 2) - cx
@@ -215,21 +219,19 @@ class CurveletFrequencyGrid():
         start_y = (self.N // 2) - (L1 // 2)
         start_x = (self.N // 2) - (L2 // 2)
 
-        big_grid[start_y:start_y + L1, start_x:start_x + L2]
+        big_grid[start_y:start_y + L1, start_x:start_x + L2] = wrapped_data
 
         # Determine shift
-        mask = self.get_wedge_filter(scale_idx, wedge_idx)
-        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
-        cy, cx = arg_max
+        cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
 
         shift_y_center = (self.N // 2) - cy
         shift_x_center = (self.N // 2) - cx
 
         # Unroll
-        unwraped_grid = np.roll(big_grid, -shift_y_center, axis=0)
-        unwraped_grid = np.roll(unwraped_grid, -shift_x_center, axis=1)
+        unwrapped_grid = np.roll(big_grid, -shift_y_center, axis=0)
+        unwrapped_grid = np.roll(unwrapped_grid, -shift_x_center, axis=1)
 
-        return unwraped_grid
+        return unwrapped_grid
     
 
     def forward_transform(self, image):
