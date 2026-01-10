@@ -173,8 +173,13 @@ class CurveletFrequencyGrid():
     def _get_wedge_center(self, scale_idx, wedge_idx):
         """Calculates the geometric center of the wedge using the MASK."""
         mask = self.get_wedge_filter(scale_idx, wedge_idx)
-        arg_max = np.unravel_index(np.argmax(mask), mask.shape)
-        return arg_max # (cy, cx)
+        grid_y, grid_x = np.indices(mask.shape)
+        total_mass = np.sum(mask)
+        if total_mass == 0:
+            return self.N // 2, self.N // 2
+        center_y = np.sum(grid_y * mask) / total_mass
+        center_x = np.sum(grid_x * mask) / total_mass
+        return int(round(center_y)), int(round(center_x))
     
     def wrap_wedge(self, wedge_data, scale_idx, wedge_idx):
         """
@@ -187,6 +192,20 @@ class CurveletFrequencyGrid():
         """
         L1, L2 = self.get_wedge_dimensions(scale_idx)
 
+        # Determine which quadrant
+        boundaries = self._get_wedge_slope_ranges(scale_idx)
+        wedges_per_quadrant = len(boundaries) - 1
+        quadrant_idx = wedge_idx // wedges_per_quadrant
+        quadrant_names = ["East", "North", "West", "South"]
+        quadrant = quadrant_names[quadrant_idx]
+
+        # Swap dimensions for horizontal wedges (east/west)
+        if quadrant in ["East", "West"]:
+            nrows, ncols = L2, L1
+        else:
+            nrows, ncols = L1, L2
+
+
         # Find the approximate center of the wedge (to be changed later)
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
 
@@ -198,10 +217,10 @@ class CurveletFrequencyGrid():
         centered_data = np.roll(centered_data, shift_x_center, axis=1)
 
         # Slice middle pixels
-        start_x = (self.N // 2) - (L2 // 2)
-        start_y = (self.N // 2) - (L1 // 2)
+        start_x = (self.N // 2) - (ncols // 2)
+        start_y = (self.N // 2) - (nrows // 2)
 
-        small_wedge = centered_data[start_y:start_y + L1, start_x:start_x + L2]
+        small_wedge = centered_data[start_y:start_y + nrows, start_x:start_x + ncols]
 
         return small_wedge
     
@@ -210,16 +229,16 @@ class CurveletFrequencyGrid():
         Reverses the wrapping
         Puts the small L1xL2 wedge back into the N x N grid.
         """
-        L1, L2 = wrapped_data.shape
+        nrows, ncols = wrapped_data.shape
 
         # Create the target grid
         big_grid = np.zeros((self.N, self.N), dtype=complex)
 
         # Place small wedge in center of grid
-        start_y = (self.N // 2) - (L1 // 2)
-        start_x = (self.N // 2) - (L2 // 2)
+        start_y = (self.N // 2) - (nrows // 2)
+        start_x = (self.N // 2) - (ncols // 2)
 
-        big_grid[start_y:start_y + L1, start_x:start_x + L2] = wrapped_data
+        big_grid[start_y:start_y + nrows, start_x:start_x + ncols] = wrapped_data
 
         # Determine shift
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
