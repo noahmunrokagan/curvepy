@@ -33,7 +33,7 @@ class CurveletFrequencyGrid():
         }
 
         self.partition_map = self._build_partition_map()
-        print("Partition map min/max:", self.partition_map.min(), self.partition_map.max())
+
 
 
 
@@ -125,6 +125,7 @@ class CurveletFrequencyGrid():
 
         # avoid divide-by-zero in places your tiling leaves empty
         P[P < 1e-12] = 1.0
+        assert np.all(P > 0) # Partition map has zeros; transform is not invertible.
         return P
     
     def get_wedge_filter(self, scale_idx, wedge_idx_in_scale):
@@ -173,7 +174,8 @@ class CurveletFrequencyGrid():
         return radial_mask * angular_mask * quadrant_mask
     
     def _get_wedge_slope_ranges(self, scale_idx: int):
-        if scale_idx == 0: return None
+        if scale_idx == 0: 
+            return None
         steps = int((scale_idx - 1) // 2) 
         num_wedges = DEFAULT_WEDGES * (2 ** steps)
         return np.linspace(-1.0, 1.0, int(num_wedges) + 1)
@@ -187,6 +189,7 @@ class CurveletFrequencyGrid():
             # Coarse scale is just a square in the center
             # Pad slightly for safety
             _, radius_outer = self._get_scale_bounds(0)
+            assert radius_outer >= 2, "Lowpass outer radius too small—check scale bounds."
             dimension = (radius_outer * 2) + 1
             return int(dimension), int(dimension)
         
