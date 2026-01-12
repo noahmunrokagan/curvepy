@@ -32,6 +32,11 @@ class CurveletFrequencyGrid():
             "South": (self.Y > 0) & (np.abs(self.X) <= self.Y)
         }
 
+        self.partition_map = self._build_partition_map()
+        print("Partition map min/max:", self.partition_map.min(), self.partition_map.max())
+
+
+
     def _get_scale_bounds(self, scale_idx: int):
         """Returns the integer radius boundaries (inner, outer) for a scale."""
         center_idx = self.N // 2
@@ -58,23 +63,23 @@ class CurveletFrequencyGrid():
         """
         r_inner, r_outer = self._get_scale_bounds(scale_idx)
 
-        # Outer Low-Pass (Phi) We normalize R so that r_outer maps to 1.0 (where Phi drops to 0)
-        # Note: meyer_phi drops from 1->0 between 0.5 and 1.0.
-        phi_outer = windows.meyer_phi(self.R / r_outer)
         
         # Inner Low-Pass (Phi)
         if scale_idx == 0:
             # Coarsest scale is just the low-pass itself
-            return phi_outer
-        else:
+            return windows.meyer_phi(self.R / r_outer)
+        
+        if scale_idx == self.scales - 1:
+            phi_outer = np.ones_like(self.R, dtype=float)
+        else: 
             # We want the window to be 0 inside r_inner.
             # Phi(R/r_inner) is 1 inside r_inner.
-            phi_inner = windows.meyer_phi(self.R / r_inner)
+            phi_outer = windows.meyer_phi(self.R / r_outer)
+        
+        phi_inner = windows.meyer_phi(self.R / r_inner)
             
-            # The "Shell" is the region between them.
-            # We use Sqrt(Outer^2 - Inner^2) to preserve energy.
-            # Clip to 0 to avoid negative sqrts due to float precision
-            return np.sqrt(np.maximum(0, phi_outer**2 - phi_inner**2))
+        # The "Shell" is the region between them.
+        return np.sqrt(np.maximum(0, phi_outer**2 - phi_inner**2))
         
     def get_angular_window(self, quadrant_name, slope_min, slope_max):
         """
@@ -97,6 +102,30 @@ class CurveletFrequencyGrid():
         # Apply Window
         # This will create a "beam" extending from the origin
         return windows.meyer_v(normalized_slope)
+    
+    def _num_wedges_in_scale(self, scale_idx: int) -> int:
+        """How many wedges exist at this scale (global index count)."""
+        if scale_idx == 0:
+            return 1
+        boundaries = self._get_wedge_slope_ranges(scale_idx)
+        wedges_per_quadrant = len(boundaries) - 1
+        return 4 * wedges_per_quadrant
+
+    def _build_partition_map(self) -> np.ndarray:
+        """
+        Computes P(ω) = Σ mask_{j,w}(ω)^2 on the SAME shifted frequency grid
+        your masks are defined on.
+        """
+        P = np.zeros((self.N, self.N), dtype=float)
+
+        for j in range(self.scales):
+            for w in range(self._num_wedges_in_scale(j)):
+                m = self.get_wedge_filter(j, w).astype(float)
+                P += m * m
+
+        # avoid divide-by-zero in places your tiling leaves empty
+        P[P < 1e-12] = 1.0
+        return P
     
     def get_wedge_filter(self, scale_idx, wedge_idx_in_scale):
         """
@@ -157,9 +186,9 @@ class CurveletFrequencyGrid():
         if scale_idx == 0:
             # Coarse scale is just a square in the center
             # Pad slightly for safety
-            radius, _ = self._get_scale_bounds(0)
-            dimension = (radius * 2) + 1
-            return dimension, dimension
+            _, radius_outer = self._get_scale_bounds(0)
+            dimension = (radius_outer * 2) + 1
+            return int(dimension), int(dimension)
         
         # We use parabolic scaling for finer scales
         inverse_scale_idx = (self.scales - 1) - scale_idx
@@ -370,6 +399,8 @@ class CurveletFrequencyGrid():
                 reconstructed_frequency += unwrapped_frequency * mask
             
         # Final inverse transform
+        reconstructed_frequency = reconstructed_frequency / self.partition_map
+
         reconstructed_image = np.fft.ifft2(np.fft.ifftshift(reconstructed_frequency))
 
         return np.real(reconstructed_image)
