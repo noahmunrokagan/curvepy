@@ -6,7 +6,18 @@ import curvepy.windows as windows
 DEFAULT_WEDGES = 4
 
 class CurveletFrequencyGrid():
+    """
+    Class which handles geometric properties and transformations for the Fast Discrete Curvelet Transform (FDCT)
+    """
     def __init__(self, N: int, scales: int):
+        """
+        Initialize the Grid.
+        Pre-computes the coordinate systems (X, Y, R, Slopes) needed for the masks.
+
+        INPUTS:
+            N: int, image size (must be square, e.g. 512)
+            scales: int, total number of scales (including the low-pass center)
+        """
         self.N = N
         self.scales = scales
         
@@ -38,7 +49,15 @@ class CurveletFrequencyGrid():
 
 
     def _get_scale_bounds(self, scale_idx: int):
-        """Returns the integer radius boundaries (inner, outer) for a scale."""
+        """
+        Returns the integer radius boundaries (inner, outer) for a scale.
+        
+        INPUTS:
+            scale_idx: int, which scale to measure
+
+        RETURNS:
+            bounds: Tuple(radius_inner, radius_outer), start and end of the ring
+        """
         center_idx = self.N // 2
         
         # Inverse logic: Scale 0 is coarsest, Scale (scales-1) is finest
@@ -53,13 +72,20 @@ class CurveletFrequencyGrid():
             radius_inner = 0
         else:
             radius_inner = self.N // (2 ** (inverse_scale + 2))
-            
-        return max(1, int(radius_inner)), max(1, int(radius_outer))
+        
+        bounds = max(1, int(radius_inner)), max(1, int(radius_outer))
+        return bounds
     
-    def get_radial_window(self, scale_idx):
+    def get_radial_window(self, scale_idx: int):
         """
         Generate the Radial 'Donut' Mask.
         Uses Difference of Squares: sqrt(Phi_outer^2 - Phi_inner^2)
+
+        INPUTS:
+            scale_idx: int, value of the scale which you'd like mask
+
+        RETURNS:
+            mask: 2D array, the circular ring mask
         """
         r_inner, r_outer = self._get_scale_bounds(scale_idx)
 
@@ -79,12 +105,21 @@ class CurveletFrequencyGrid():
         phi_inner = windows.meyer_phi(self.R / r_inner)
             
         # The "Shell" is the region between them.
-        return np.sqrt(np.maximum(0, phi_outer**2 - phi_inner**2))
+        mask = np.sqrt(np.maximum(0, phi_outer**2 - phi_inner**2)) 
+        return mask
         
     def get_angular_window(self, quadrant_name, slope_min, slope_max):
         """
         Generate the Angular 'Wedge' Mask.
         Applies meyer_v centered on the wedge.
+
+        INPUTS:
+            quadrant_name: str, 'East', 'West', 'North', or 'South'
+            slope_min: float, starting slope of the wedge
+            slope_max: float, ending slope of the wedge
+
+        RETURNS:
+            mask: 2D array, the angular beam mask
         """
         # Select correct slope grid
         if quadrant_name in ["East", "West"]:
@@ -104,17 +139,32 @@ class CurveletFrequencyGrid():
         return windows.meyer_v(normalized_slope)
     
     def _num_wedges_in_scale(self, scale_idx: int) -> int:
-        """How many wedges exist at this scale (global index count)."""
+        """
+        How many wedges exist at this scale.
+        
+        INPUTS:
+            scale_idx: int, the scale to check
+
+        RETURNS:
+            count: int, total number of wedges
+        """
         if scale_idx == 0:
             return 1
         boundaries = self._get_wedge_slope_ranges(scale_idx)
         wedges_per_quadrant = len(boundaries) - 1
-        return 4 * wedges_per_quadrant
+        count = 4 * wedges_per_quadrant
+        return count
 
     def _build_partition_map(self) -> np.ndarray:
         """
-        Computes P(ω) = Σ mask_{j,w}(ω)^2 on the SAME shifted frequency grid
-        your masks are defined on.
+        Computes the sum of squares of all filters.
+        Used to normalize the inverse transform so energy is preserved.
+
+        INPUTS:
+            None
+
+        RETURNS:
+            P: 2D array, the normalization grid
         """
         P = np.zeros((self.N, self.N), dtype=float)
 
@@ -131,7 +181,14 @@ class CurveletFrequencyGrid():
     def get_wedge_filter(self, scale_idx, wedge_idx_in_scale):
         """
         Returns the Soft Wedge Filter for a specific scale and wedge index.
-        Handles mapping global index -> Quadrant -> Slope.
+        Combines Radial Donut + Angular Beam + Quadrant Mask.
+
+        INPUTS:
+            scale_idx: int, scale index
+            wedge_idx_in_scale: int, global wedge index
+
+        RETURNS:
+            mask: 2D array, the final isolator filter
         """
         # Get Radial Donut
         radial_mask = self.get_radial_window(scale_idx)
@@ -171,19 +228,37 @@ class CurveletFrequencyGrid():
         quadrant_mask = self.Quadrants[quadrant]
         
         # Combine
-        return radial_mask * angular_mask * quadrant_mask
+        mask = radial_mask * angular_mask * quadrant_mask
+        return mask
     
     def _get_wedge_slope_ranges(self, scale_idx: int):
+        """
+        Calculates the slope boundaries for wedges at a specific scale.
+        
+        INPUTS:
+            scale_idx: int, scale index
+
+        RETURNS:
+            boundaries: array, list of slope values [-1, ... , 1]
+        """
         if scale_idx == 0: 
             return None
         steps = int((scale_idx - 1) // 2) 
         num_wedges = DEFAULT_WEDGES * (2 ** steps)
-        return np.linspace(-1.0, 1.0, int(num_wedges) + 1)
+        boundaries = np.linspace(-1.0, 1.0, int(num_wedges) + 1)
+        return boundaries
     
     def get_wedge_dimensions(self, scale_idx):
         """
         Returns optimal (L1, L2) rectangle size for a wedge at this scale.
-        L1 is 'Lengeth' (radial), L2 is 'Width' (Angular)
+        L1 is 'Length' (radial), L2 is 'Width' (Angular).
+        
+        INPUTS:
+            scale_idx: int, scale index
+
+        RETURNS:
+            L1: int, radial length
+            L2: int, angular width
         """
         if scale_idx == 0:
             # Coarse scale is just a square in the center
@@ -203,7 +278,18 @@ class CurveletFrequencyGrid():
         return int(L1), int(L2)
     
     def _get_wedge_center(self, scale_idx, wedge_idx):
-        """Calculates the geometric center of the wedge using the MASK."""
+        """
+        Calculates the geometric center of the wedge using the MASK.
+        Used to figure out how much to shift the data before wrapping.
+
+        INPUTS:
+            scale_idx: int, scale index
+            wedge_idx: int, wedge index
+
+        RETURNS:
+            cy: int, center Y coordinate
+            cx: int, center X coordinate
+        """
         mask = self.get_wedge_filter(scale_idx, wedge_idx)
         grid_y, grid_x = np.indices(mask.shape)
         total_mass = np.sum(mask)
@@ -215,12 +301,16 @@ class CurveletFrequencyGrid():
     
     def wrap_wedge(self, wedge_data, scale_idx, wedge_idx):
         """
-        Cuts out the "glowing trapezoid" and wraps it into rectangle L1 x L2
-        
-        :param self: Description
-        :param wedge_data: Description
-        :param scale_idx: Description
-        :param wedge_idx: Description
+        Cuts out the 'glowing trapezoid' and wraps it into a small rectangle.
+        This exploits the periodicity of the FFT.
+
+        INPUTS:
+            wedge_data: 2D array, frequency data masked for one wedge
+            scale_idx: int, scale index
+            wedge_idx: int, wedge index
+
+        RETURNS:
+            small_wedge: 2D array, the compact wrapped data (L1 x L2)
         """
         L1, L2 = self.get_wedge_dimensions(scale_idx)
 
@@ -258,8 +348,16 @@ class CurveletFrequencyGrid():
     
     def unwrap_wedge(self, wrapped_data, scale_idx, wedge_idx):
         """
-        Reverses the wrapping
-        Puts the small L1xL2 wedge back into the N x N grid.
+        Reverses the wrapping.
+        Puts the small L1xL2 wedge back into the big N x N grid at the correct position.
+
+        INPUTS:
+            wrapped_data: 2D array, compact coefficient data
+            scale_idx: int, scale index
+            wedge_idx: int, wedge index
+
+        RETURNS:
+            unwrapped_grid: 2D array, full size grid with wedge placed correctly
         """
         nrows, ncols = wrapped_data.shape
 
@@ -287,7 +385,13 @@ class CurveletFrequencyGrid():
 
     def forward_transform(self, image):
         """
-        Perform fast discrete curvelet transform via wrapping
+        Perform Fast Discrete Curvelet Transform via Wrapping.
+        
+        INPUTS:
+            image: 2D array, input image (spatial domain)
+
+        RETURNS:
+            coefficients: list of lists, curvelet coefficients organized by [scale][wedge]
         """
         # Compute 2-D array fast fourier transform, and shift it (since our grid has (0,0) at the centre)
         image_frequency = np.fft.fftshift(np.fft.fft2(image))
@@ -348,13 +452,13 @@ class CurveletFrequencyGrid():
     
     def inverse_transform(self, coefficients):
         """
-        Performs inverse fast discrete curvelet transform via wrapping
+        Performs Inverse Fast Discrete Curvelet Transform via Wrapping.
         
         INPUTS:
-        coefficients: List of lists 'coefficients' from forward_transform
+            coefficients: list of lists, curvelet coefficients [scale][wedge]
         
-        OUTPUT:
-        (N, N) reconstructed image
+        RETURNS:
+            reconstructed_image: 2D array, the restored image
         """
 
         reconstructed_frequency = np.zeros((self.N, self.N), dtype=complex)
@@ -411,32 +515,3 @@ class CurveletFrequencyGrid():
 
 
 
-# --- VISUALIZATION ---
-if __name__ == "__main__":
-    # Use scales=6 for 512x512 to match the paper's 'tight' center
-    # Use 4 wedges per quadrant (16 total) as the base to match the paper's coarse scale
-    fdct = CurveletFrequencyGrid(N=512, scales=6) 
-    
-    print("Building Grid...")
-    all_wedges = fdct.build_grid()
-    
-    # VISUALIZATION FIX:
-    # Use random colors so neighbors don't blend together
-    viz_map = np.zeros((512, 512))
-    
-    # Shuffle indices to ensure random colors
-    # We add 10 to start above 0 (background)
-    import random
-    indices = list(range(len(all_wedges)))
-    random.shuffle(indices)
-
-    for i, mask in enumerate(all_wedges):
-        # Assign a random discrete value
-        viz_map[mask] = indices[i] + 10 
-        
-    plt.figure(figsize=(10, 10))
-    plt.title("Curvelet Frequency Tiling (Corrected Viz)")
-    # 'nipy_spectral' is a high-contrast rainbow map
-    plt.imshow(viz_map, cmap='nipy_spectral', origin='upper') 
-    plt.axis('off')
-    plt.show()

@@ -10,16 +10,29 @@ def meyer_auxiliary(x):
     The polynomial h(x) typically used in Meyer wavelets.
     Smoothly transitions from 0 to 1 on the interval [0, 1].
     Formula: 35x^4 - 84x^5 + 70x^6 - 20x^7
+
+    INPUTS:
+        x: float or array, input values to be smoothed
+
+    RETURNS:
+        val: float or array, smoothed values between 0 and 1
     """
     # Clamp inputs to [0, 1] for the polynomial calculation
     x_clamped = np.clip(x, 0, 1)
-    return 35 * x_clamped**4 - 84 * x_clamped**5 + 70 * x_clamped**6 - 20 * x_clamped**7
+    val = 35 * x_clamped**4 - 84 * x_clamped**5 + 70 * x_clamped**6 - 20 * x_clamped**7
+    return val
 
 def meyer_phi(omega):
     """
     The Low-Pass Scaling Function Phi(omega).
     1 inside the low-frequency core, 0 outside.
     Support: typically decays from 1 to 0 in the interval [1/2, 1].
+
+    INPUTS:
+        omega: float or array, frequency values
+
+    RETURNS:
+        phi: float or array, filter values (0.0 to 1.0)
     """
     omega = np.abs(omega)
     
@@ -49,15 +62,28 @@ def meyer_psi(omega):
     The Band-Pass Wavelet Function Psi(omega).
     Isolates a specific 'donut' ring in frequency.
     Psi(w) = sqrt(Phi(w/2)^2 - Phi(w)^2)
+
+    INPUTS:
+        omega: float or array, frequency values
+
+    RETURNS:
+        psi: float or array, filter values for the band-pass
     """
     # This ensures that |Phi|^2 + |Psi|^2 + ... sums to 1 (Energy preservation)
-    return np.sqrt(meyer_phi(omega / 2)**2 - meyer_phi(omega)**2)
+    psi = np.sqrt(meyer_phi(omega / 2)**2 - meyer_phi(omega)**2)
+    return psi
 
 def meyer_v(t):
     """
     The Angular Window V(t).
     Used for smooth wedge transitions.
     Typically supported on [-1, 1].
+
+    INPUTS:
+        t: float or array, slope or angle values
+
+    RETURNS:
+        v: float or array, window values (0.0 to 1.0)
     """
     # V(t) must satisfy V(t)^2 + V(t-1)^2 = 1 for the partition of unity.
     
@@ -71,42 +97,3 @@ def meyer_v(t):
     
     return v
 
-
-if __name__ == "__main__":
-    print("Plotting Meyer Windows...")
-    
-    # 1. Setup Domain
-    x = np.linspace(0, 2.5, 500)
-    t = np.linspace(-1.5, 1.5, 500)
-    
-    # 2. Compute Functions
-    y_phi = meyer_phi(x)
-    y_psi = meyer_psi(x)
-    y_v   = meyer_v(t)
-    
-    # 3. Plot
-    plt.figure(figsize=(12, 5))
-    
-    # Plot Radial Components
-    plt.subplot(1, 2, 1)
-    plt.plot(x, y_phi, 'b-', linewidth=2, label=r'Low Pass $\Phi(\omega)$')
-    plt.plot(x, y_psi, 'r--', linewidth=2, label=r'Band Pass $\Psi(\omega)$')
-    plt.title("Radial Meyer Windows")
-    plt.xlabel(r"Frequency $\omega$")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.axvline(0.5, color='k', linestyle=':', alpha=0.3)
-    plt.axvline(1.0, color='k', linestyle=':', alpha=0.3)
-    plt.axvline(2.0, color='k', linestyle=':', alpha=0.3)
-
-    # Plot Angular Component
-    plt.subplot(1, 2, 2)
-    plt.plot(t, y_v, 'g-', linewidth=2, label=r'Angular Window $V(t)$')
-    plt.title("Angular Meyer Window")
-    plt.xlabel("Slope / Angle")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    
-    plt.tight_layout()
-    plt.show()
-    

@@ -3,19 +3,51 @@ from .curvepy import CurveletFrequencyGrid
 
 
 def normalize(img):
-    return (img - np.min(img)) / (np.max(img) - np.min(img))
+    """
+    Simple min-max normalization to get image into 0.0 to 1.0 range.
+
+    INPUTS:
+        img: array, input image
+
+    RETURNS:
+        norm_img: array, normalized image
+    """
+    norm_img = (img - np.min(img)) / (np.max(img) - np.min(img))
+    return norm_img
 
 def hard_threshold(data, threshold):
+    """
+    Sets coefficients smaller than threshold to zero. Keeps others unchanged.
+
+    INPUTS:
+        data: array, curvelet coefficients
+        threshold: float, cutoff value
+
+    RETURNS:
+        filtered_data: array, data with noise removed
+    """
 
     mask = np.abs(data) > threshold
-
-    return data * mask
+    filtered_data = data * mask
+    return filtered_data
 
 def soft_threshold(data, threshold):
+    """
+    Shrinks coefficients by the threshold amount. 
+    Reduces magnitude towards zero, making images smoother.
+
+    INPUTS:
+        data: array, curvelet coefficients
+        threshold: float, shrinkage amount
+
+    RETURNS:
+        filtered_data: array, smoothed data
+    """
     magnitude = np.abs(data) 
     new_magnitude = np.maximum(0, magnitude - threshold)
-    return np.sign(data) * new_magnitude
-
+    filtered_data = np.sign(data) * new_magnitude
+    return filtered_data
+    
 def calculate_psnr(orignal, restored):
     """
     Calculates peak signal to noise ratio measured in decibels (dB)
@@ -24,7 +56,7 @@ def calculate_psnr(orignal, restored):
         original: normalized image in its original form (pre transformation/filtering)
         restored: normalized restored image (after transfomation, filtering, inverse transform)
     
-    OUTPUTS:
+    RETURNS:
         psnr: float, value indicating the peak SNR value in dB
     """
     mse = np.mean((orignal - restored) ** 2)
@@ -48,7 +80,7 @@ def compute_thresholds(freq_grid: CurveletFrequencyGrid, image_shape, sigma_pixe
         sigma_pixel: Noise level added to pixels
         k: threshold multiplier. Lower = more detail, higher = less noise
 
-    OUTPUTS:
+    RETURNS:
         thresholds: List of lists containing threshold for every wedge
     """
 
