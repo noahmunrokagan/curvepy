@@ -5,7 +5,7 @@ import numpy as np
 import skimage.color as color
 from skimage.util import img_as_float
 
-class ColorCuerveletDenoise:
+class ColorCurveletDenoise:
     """
     A wrapper that handles Color Space conversion and channel looping
     """

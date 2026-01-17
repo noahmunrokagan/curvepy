@@ -1,0 +1,19 @@
+contourpy==1.3.3
+-e git+https://github.com/noahmunrokagan/curvepy.git@c4677b792e08193747625c1c58663c8c77a3c43b#egg=curvepy
+cycler==0.12.1
+fonttools==4.61.1
+ImageIO==2.37.2
+kiwisolver==1.4.9
+lazy_loader==0.4
+matplotlib==3.10.8
+networkx==3.6
+numpy==2.4.1
+packaging==25.0
+pillow==12.1.0
+pyparsing==3.3.1
+python-dateutil==2.9.0.post0
+PyWavelets==1.9.0
+scikit-image==0.26.0
+scipy==1.17.0
+six==1.17.0
+tifffile==2026.1.14
