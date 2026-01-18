@@ -1,13 +1,21 @@
 [project]
 name = "curvepy"
-version = "0.1.0"
-description = ""
-authors = [
-    {name = "Noah Munro-Kagan"}
-]
-license = {text = "MIT"}
+version = "1.0.0"
+description = "A Pure Python Clean-Room Implementation of the Fast Discrete Curvelet Transform"
 readme = "README.md"
+license = {file = "LICENCE"}
 requires-python = ">=3.11"
+authors = [
+    {name = "Noah Munro-Kagan", email = "noahmunrokagan@gmail.com"}
+]
+keywords = ["curvelet", "signal-processing", "denoising", "wavelets"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
 dependencies = [
     "numpy (>=2.4.0,<3.0.0)",
     "matplotlib (>=3.10.8,<4.0.0)",
@@ -15,7 +23,10 @@ dependencies = [
     "scikit-image (>=0.26.0,<0.27.0)"
 ]
 
-
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[project.urls]
+"Homepage" = "https://github.com/noahmunrokagan/curvepy"
+"Bug Tracker" = "https://github.com/noahmunrokagan/curvepy/issues"
