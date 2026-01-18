@@ -190,45 +190,49 @@ class CurveletFrequencyGrid():
         RETURNS:
             mask: 2D array, the final isolator filter
         """
-        # Get Radial Donut
+# 1. Get Radial Donut
         radial_mask = self.get_radial_window(scale_idx)
         
-        # If scale 0 (Center), just return the radial mask (low pass)
+        # If scale 0 (Center), just return the radial mask
         if scale_idx == 0:
             return radial_mask
 
-        # Determine Wedge Slope Bounds
+        # 2. Determine Wedge Slope Bounds
         boundaries = self._get_wedge_slope_ranges(scale_idx)
-        # boundaries has N+1 items for N wedges.
         wedges_per_quadrant = len(boundaries) - 1
         
-        # Map Global Index to Quadrant & Slope
-        # We assume standard counter-clockwise order: East -> North -> West -> South
+        # 3. Map Global Index to Quadrant & Slope
         quad_names = ["East", "North", "West", "South"]
-        
         quad_idx = wedge_idx_in_scale // wedges_per_quadrant
         slope_idx = wedge_idx_in_scale % wedges_per_quadrant
         
-        # Safety check for index out of bounds
         if quad_idx >= 4:
             raise ValueError(f"Wedge Index {wedge_idx_in_scale} exceeds max for Scale {scale_idx}")
 
         quadrant = quad_names[quad_idx]
         
-        # Get Slope Range
-        # Note: Slope definition might need reversal for certain quadrants to maintain
-        # continuous rotation, but for visualization, direct mapping is fine.
+        # 4. Get Slope Range
         s_min = boundaries[slope_idx]
         s_max = boundaries[slope_idx+1]
         
-        # Get Angular Beam
+        # 5. Get Angular Beam
         angular_mask = self.get_angular_window(quadrant, s_min, s_max)
         
-        # Get Quadrant Hard Mask (To cut off the wrap-around slopes)
-        quadrant_mask = self.Quadrants[quadrant]
+        # 6. Apply Broad Quadrant Mask
+        # We allow the wedge to extend naturally past the diagonal.
+        # We only cut it off if it wraps all the way around to the opposite side.
         
-        # Combine
-        mask = radial_mask * angular_mask * quadrant_mask
+        if quadrant == "East":
+            broad_mask = (self.X > 0)
+        elif quadrant == "West":
+            broad_mask = (self.X < 0)
+        elif quadrant == "North":
+            broad_mask = (self.Y < 0) # Numpy Y is positive downwards
+        elif quadrant == "South":
+            broad_mask = (self.Y > 0)
+            
+        mask = radial_mask * angular_mask * broad_mask
+        
         return mask
     
     def _get_wedge_slope_ranges(self, scale_idx: int):
