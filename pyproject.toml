@@ -1,10 +1,10 @@
 [project]
-name = "curvepy"
+name = "curvepy-fdct"
 version = "1.0.0"
 description = "A Pure Python Clean-Room Implementation of the Fast Discrete Curvelet Transform"
 readme = "README.md"
-license = {file = "LICENCE"}
 requires-python = ">=3.11"
+license = {file = "LICENSE"}
 authors = [
     {name = "Noah Munro-Kagan", email = "noahmunrokagan@gmail.com"}
 ]
@@ -17,16 +17,21 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 dependencies = [
-    "numpy (>=2.4.0,<3.0.0)",
-    "matplotlib (>=3.10.8,<4.0.0)",
-    "pywavelets (>=1.9.0,<2.0.0)",
-    "scikit-image (>=0.26.0,<0.27.0)"
+    "numpy>=2.4.0,<3.0.0",
+    "matplotlib>=3.10.8,<4.0.0",
+    "pywavelets>=1.9.0,<2.0.0",
+    "scikit-image>=0.26.0,<0.27.0"
 ]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [project.urls]
 "Homepage" = "https://github.com/noahmunrokagan/curvepy"
 "Bug Tracker" = "https://github.com/noahmunrokagan/curvepy/issues"
+
+# --- THIS IS THE CRITICAL FIX ---
+# The 'packages' config belongs to Poetry specifically, not the generic Project.
+[tool.poetry]
+packages = [{include = "curvepy"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
