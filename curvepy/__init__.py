@@ -1,2 +1,2 @@
 from .curvepy import CurveletFrequencyGrid
-from .colors import ColorCurveletDenoise
+from .denoise import CurveletDenoise

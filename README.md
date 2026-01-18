@@ -39,9 +39,8 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-1. Basic Transformation and Denoising (Grayscale image)
+1. Basic Transformation (Grayscale image)
 ```python
-import numpy as np
 import matpolotlib.pyplot as plt
 import skimage.data as data
 from curvepy.curvepy import CurveletFrequencyGrid
@@ -75,22 +74,59 @@ plt.tight_layout()
 plt.show()
 ```
 
+2. Basic Transformation and Denoising (Grayscale image)
+```python
+import matpolotlib.pyplot as plt
+import skimage.data as data
+from curvepy.curvepy import CurveletFrequencyGrid
+from curvepy.denoise import CurveletDenoise
 
-2. Denoising a Color Image
+
+# Initialize the Transformation engine (512x512 grid, 4 scales)
+fdct = CurveletFrequencyGrid(N=512, scales=4)
+denoise_engine = CurveletDenoise(fdct)
+
+# Load Image
+image = data.camera()
+
+# 1. Forward Transform
+coefficients = fdct.forward_transform(image)
+
+# 2. Denoise
+restored_img = denoise_engine.denoise(noisy_img, sigma, multiplier)
+psnr = denoise_engine.calculate_psnr_rgb(img, restored_img)
+
+# 3. Plot results
+plt.figure(figsize=(12,4))
+plt.suptitle(f"Original vs restored img for soft thresholding, PSNR = {psnr:.2f} dB, multiplier = {multiplier}")
+
+plt.subplot(1, 2, 1)
+plt.imshow(img, cmap=plt.cm.gray)
+plt.title("original img")
+
+plt.subplot(1, 2, 2)
+plt.imshow(restored_img, cmap=plt.cm.gray)
+plt.title("restored img")
+
+plt.tight_layout()
+plt.show()
+```
+
+3. Denoising a Color Image
 ```python
 import matplotlib.pyplot as plt
 import skimage.data as data
 from curvepy.curvepy import CurveletFrequencyGrid
-from curvepy.colors import ColorCuerveletDenoise
+from curvepy.denoise import ColorCuerveletDenoise
 
 # Setup
 fdct = CurveletFrequencyGrid(N=512, scales=4)
-color_engine = ColorCuerveletDenoise(fdct)
-image = color_engine.normalize_img(data.astronaut())
+denoise_engine = CuerveletDenoise(fdct)
+image = denoise_engine.normalize_img(data.astronaut())
 
 # Apply denoising
-restored_image = color_engine.denoise(image, sigma=0.1, multiplier=1.5)
-psnr = color_engine.calculate_psnr_rgb(image, restored_image) # Calculate peak SNR value between two images
+restored_image = denoise_engine.denoise(image, sigma=0.1, multiplier=1.5)
+psnr = denoise_engine.calculate_psnr_rgb(image, restored_image) # Calculate peak SNR value between two images
 
 # Plot results
 plt.figure(figsize=(12,4))
@@ -113,7 +149,7 @@ curvepy/\
 ├── curvepy.py       # Core Engine: FDCT & IFDCT implementation \
 ├── windows.py       # Math: Meyer Window functions (Phi, Psi, V) \
 ├── filters.py       # Tools: Thresholding logic & Monte Carlo calibration \
-└── colors.py        # App: YUV Color wrapper & Denoising pipeline
+└── denoise.py        # App: YUV Color wrapper & Denoising pipeline
 
 ## Theory + How it Works:
 Standard 2D Wavelets are isotropic, ie. they treat all directions equally. This doens't work well for images where the curves/outlines of the shapes are what are important to be preserved. This creates a blocky or ringing effect when trying to represent a smooth curve.

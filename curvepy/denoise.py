@@ -5,7 +5,7 @@ import numpy as np
 import skimage.color as color
 from skimage.util import img_as_float
 
-class ColorCurveletDenoise:
+class CurveletDenoise:
     """
     A wrapper that handles Color Space conversion and channel looping
     """
@@ -78,9 +78,27 @@ class ColorCurveletDenoise:
         # Ensure image is between 0.0 and 1.0
         return np.clip(rgb_image, 0, 1)
     
-    def denoise(self, rgb_image, sigma, multiplier):
+    def _denoise_channel(self, image_2d, sigma, multiplier):
+        """Helper to process a single 2D channel"""
+        coeffs = self.fdct.forward_transform(image_2d)
+        thresholds = compute_thresholds(self.fdct, image_2d.shape, sigma, multiplier)
+        
+        new_coeffs = []
+        for i, scale in enumerate(coeffs):
+            new_scale = []
+            for w, wedge in enumerate(scale):
+                # Apply Soft Thresholding
+                filtered = soft_threshold(wedge, thresholds[i][w])
+                new_scale.append(filtered)
+            new_coeffs.append(new_scale)
+            
+        return self.fdct.inverse_transform(new_coeffs)
+        
+
+    
+    def denoise(self, image, sigma, multiplier=3.0):
         """
-        Denoising of an RGB image via Soft Thresholding and YUV transformation.
+        Denoising of an image. Handles both greyscale and RGB images via Soft Thresholding and YUV transformation (for RGB images).
         
         INPUTS:
             rgb_image: 3D array, noisy input image
@@ -90,42 +108,49 @@ class ColorCurveletDenoise:
         RETURNS:
             clean_image: 3D array, denoised result
         """
-        # Breakdown image into coefficients
-        all_coefficients = self.forward_yuv(rgb_image)
-
-        # Denoise different channels differently  
-        # Channel 0 = Y (Luma Light)
-        # Channel 1, 2 are Cb, Cr (color)
-
-        denoised_coeffs_all = []
-
-        for i, channel_coeffs in enumerate(all_coefficients):
-            threshold_list = compute_thresholds(self.fdct, rgb_image.shape[:2], sigma, multiplier)
-            denoised_coeffs = []
-
-            for j in range(len(channel_coeffs)):
-                    
-                denoised_scale = []
-                
-
-                if j == 0:
-                    denoised_scale = channel_coeffs[j]
-                    denoised_coeffs.append(denoised_scale)
-                    continue
-                
-                for w in range(len(channel_coeffs[j])):
-
-                    data = channel_coeffs[j][w]
-                    T = threshold_list[j][w]
-
-                    clean_wedge = soft_threshold(data, T)
-                    denoised_scale.append(clean_wedge)
-                
-                denoised_coeffs.append(denoised_scale)
-            
-            denoised_coeffs_all.append(denoised_coeffs)
+        image = self.normalize_img(image)
         
-        return self.inverse_yuv(denoised_coeffs_all)
+        if image.ndim == 2:
+            return self._denoise_channel(image, sigma, multiplier)
+        elif image.ndim == 3 and image.shape[2] == 3:
+            # Breakdown image into coefficients
+            all_coefficients = self.forward_yuv(image)
+
+            # Denoise different channels differently  
+            # Channel 0 = Y (Luma Light)
+            # Channel 1, 2 are Cb, Cr (color)
+
+            denoised_coeffs_all = []
+
+            for i, channel_coeffs in enumerate(all_coefficients):
+                threshold_list = compute_thresholds(self.fdct, image.shape[:2], sigma, multiplier)
+                denoised_coeffs = []
+
+                for j in range(len(channel_coeffs)):
+                        
+                    denoised_scale = []
+                    
+
+                    if j == 0:
+                        denoised_scale = channel_coeffs[j]
+                        denoised_coeffs.append(denoised_scale)
+                        continue
+                    
+                    for w in range(len(channel_coeffs[j])):
+
+                        data = channel_coeffs[j][w]
+                        T = threshold_list[j][w]
+
+                        clean_wedge = soft_threshold(data, T)
+                        denoised_scale.append(clean_wedge)
+                    
+                    denoised_coeffs.append(denoised_scale)
+                
+                denoised_coeffs_all.append(denoised_coeffs)
+            
+            return self.inverse_yuv(denoised_coeffs_all)
+        else:
+            raise ValueError("Image must be 2D (Gray) or 3D (RGB)")
     
     def calculate_psnr_rgb(self, original, restored):
         return calculate_psnr(original, restored)
