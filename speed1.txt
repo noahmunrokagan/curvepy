@@ -1,0 +1,31 @@
+Running Benchmark on 512x512 image...
+Forward Transform: 1.4388 seconds
+Inverse Transform: 1.3310 seconds
+
+--- DETAILED PROFILING ---
+Running Benchmark on 512x512 image...
+Forward Transform: 1.5980 seconds
+Inverse Transform: 1.3960 seconds
+         50072 function calls in 3.701 seconds
+
+   Ordered by: cumulative time
+   List reduced from 93 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    3.701    3.701 /Users/noahmunro-kagan/projects/curvepy/profile_speed.py:7(benchmark)
+      483    0.262    0.001    2.970    0.006 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:181(get_wedge_filter)
+        1    0.075    0.075    1.598    1.598 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:390(forward_transform)
+      483    0.310    0.001    1.519    0.003 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:79(get_radial_window)
+        1    0.072    0.072    1.396    1.396 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:457(inverse_transform)
+      192    0.089    0.000    1.356    0.007 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:284(_get_wedge_center)
+     1283    1.266    0.001    1.304    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:8(meyer_auxiliary)
+      803    0.563    0.001    1.197    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:25(meyer_phi)
+      480    0.076    0.000    1.180    0.002 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:111(get_angular_window)
+      480    0.321    0.001    1.104    0.002 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:76(meyer_v)
+       96    0.022    0.000    0.822    0.009 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:306(wrap_wedge)
+       96    0.016    0.000    0.709    0.007 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:353(unwrap_wedge)
+        1    0.005    0.005    0.706    0.706 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:12(__init__)
+        1    0.063    0.063    0.699    0.699 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy/curvepy.py:158(_build_partition_map)
+      580    0.140    0.000    0.142    0.000 /Users/noahmunro-kagan/projects/curvepy/.venv/lib/python3.14/site-packages/numpy/_core/numeric.py:1230(roll)
+
+
