@@ -20,17 +20,22 @@ dependencies = [
     "numpy>=2.4.0,<3.0.0",
     "matplotlib>=3.10.8,<4.0.0",
     "pywavelets>=1.9.0,<2.0.0",
-    "scikit-image>=0.26.0,<0.27.0"
+    "scikit-image>=0.26.0,<0.27.0",
+    "Cython>=3.0.0",
+    "setuptools>=65.0.0"
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/noahmunrokagan/curvepy"
 "Bug Tracker" = "https://github.com/noahmunrokagan/curvepy/issues"
 
-
 [tool.poetry]
 packages = [{include = "curvepy"}]
 
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
+
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools", "Cython", "numpy"]
 build-backend = "poetry.core.masonry.api"
