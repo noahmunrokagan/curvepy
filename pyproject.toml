@@ -1,6 +1,6 @@
 [project]
 name = "curvepy-fdct"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Pure Python Clean-Room Implementation of the Fast Discrete Curvelet Transform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,8 +27,7 @@ dependencies = [
 "Homepage" = "https://github.com/noahmunrokagan/curvepy"
 "Bug Tracker" = "https://github.com/noahmunrokagan/curvepy/issues"
 
-# --- THIS IS THE CRITICAL FIX ---
-# The 'packages' config belongs to Poetry specifically, not the generic Project.
+
 [tool.poetry]
 packages = [{include = "curvepy"}]
 

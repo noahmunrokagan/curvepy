@@ -163,9 +163,9 @@ This allows CurvePy to represent a curved edge with very few coefficients relati
 To understand why this matters, we visualized the inner workings of the transform below:
 
 Image
-![Astronaut Image](https://github.com/noahmunrokagan/curvepy/blob/master/assets/astronaut.png)
+![Astronaut Image](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/assets/astronaut.png)
 Transformation Process for Above Image
-![Curvelet Theory Grid](https://github.com/noahmunrokagan/curvepy/blob/master/assets/curvelet_theory_image.png) 
+![Curvelet Theory Grid](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/assets/curvelet_theory_image.png) 
 
 
 ### The 4-Step Pipeline (Explained)
