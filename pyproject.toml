@@ -1,6 +1,6 @@
 [project]
 name = "curvepy-fdct"
-version = "1.0.1"
+version = "1.1.0"
 description = "A Pure Python Clean-Room Implementation of the Fast Discrete Curvelet Transform"
 readme = "README.md"
 requires-python = ">=3.11"
