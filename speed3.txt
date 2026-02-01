@@ -1,0 +1,32 @@
+Curvepy accelerated with Cython
+Running Benchmark on 512x512 image...
+Forward Transform: 0.1525 seconds
+Inverse Transform: 0.1538 seconds
+
+--- DETAILED PROFILING ---
+Running Benchmark on 512x512 image...
+Forward Transform: 0.1523 seconds
+Inverse Transform: 0.1534 seconds
+         23542 function calls in 0.901 seconds
+
+   Ordered by: cumulative time
+   List reduced from 93 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.901    0.901 /Users/noahmunro-kagan/projects/curvepy/profile_speed.py:7(benchmark)
+        1    0.005    0.005    0.594    0.594 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:17(__init__)
+        1    0.015    0.015    0.587    0.587 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:165(_build_partition_map)
+      483    0.038    0.000    0.569    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:188(get_wedge_filter)
+       97    0.049    0.001    0.295    0.003 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:86(get_radial_window)
+      257    0.242    0.001    0.248    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:8(meyer_auxiliary)
+      161    0.126    0.001    0.245    0.002 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:25(meyer_phi)
+       96    0.013    0.000    0.235    0.002 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:118(get_angular_window)
+       96    0.080    0.001    0.222    0.002 /Users/noahmunro-kagan/projects/curvepy/curvepy/windows.py:76(meyer_v)
+        1    0.034    0.034    0.153    0.153 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:491(inverse_transform)
+        1    0.029    0.029    0.152    0.152 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:424(forward_transform)
+      192    0.064    0.000    0.107    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:299(_get_wedge_center)
+      196    0.001    0.000    0.105    0.001 /Users/noahmunro-kagan/projects/curvepy/.venv/lib/python3.14/site-packages/numpy/fft/_pocketfft.py:741(_raw_fftnd)
+      392    0.101    0.000    0.101    0.000 /Users/noahmunro-kagan/projects/curvepy/.venv/lib/python3.14/site-packages/numpy/fft/_pocketfft.py:58(_raw_fft)
+       96    0.008    0.000    0.064    0.001 /Users/noahmunro-kagan/projects/curvepy/curvepy/curvepy.py:321(wrap_wedge)
+
+

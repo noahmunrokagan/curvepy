@@ -1,3 +1,58 @@
+Metadata-Version: 2.4
+Name: curvepy-fdct
+Version: 1.0.1
+Summary: A Pure Python Clean-Room Implementation of the Fast Discrete Curvelet Transform
+Home-page: https://github.com/noahmunrokagan/curvepy
+Author: Noah Munro-Kagan
+Author-email: Noah Munro-Kagan <noahmunrokagan@gmail.com>
+Maintainer: None
+Maintainer-email: None
+License: MIT License
+        
+        Copyright (c) [2026] [Noah Munro-Kagan]
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/noahmunrokagan/curvepy
+Project-URL: Bug Tracker, https://github.com/noahmunrokagan/curvepy/issues
+Keywords: curvelet,signal-processing,denoising,wavelets
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Image Processing
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy<3.0.0,>=2.4.0
+Requires-Dist: matplotlib<4.0.0,>=3.10.8
+Requires-Dist: pywavelets<2.0.0,>=1.9.0
+Requires-Dist: scikit-image<0.27.0,>=0.26.0
+Requires-Dist: Cython>=3.0.0
+Requires-Dist: setuptools>=65.0.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: requires-python
+
 # CurvePy: Fast Discrete Curvelet Transform (FDCT)
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)

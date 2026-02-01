@@ -1,7 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import curvepy.windows as windows
-
+try:
+    from . import inner_loop
+    CYTHON_AVILABLE = True
+    print("Curvepy accelerated with Cython")
+except ImportError:
+    CYTHON_AVILABLE = False
+    print("Cython module not found")
 # Standard Curvelet setups usually use 8 wedges per quadrant at the 2nd coarse scale
 DEFAULT_WEDGES = 4
 
@@ -317,6 +322,7 @@ class CurveletFrequencyGrid():
         """
         Cuts out the 'glowing trapezoid' and wraps it into a small rectangle.
         This exploits the periodicity of the FFT.
+        Uses Cython optimized code if available.
 
         INPUTS:
             wedge_data: 2D array, frequency data masked for one wedge
@@ -345,6 +351,11 @@ class CurveletFrequencyGrid():
         # Find the approximate center of the wedge (to be changed later)
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
 
+        # Use optimized code if available
+        if CYTHON_AVILABLE:
+            return inner_loop.wrap_wedge_fast(wedge_data, nrows, ncols, cy, cx, self.N)
+
+        # Default to python based implementation if Cython code not available
         # Cut out rectangle, handle indices moved by np.roll
         shift_x_center = (self.N // 2) - cx
         shift_y_center = (self.N // 2) - cy
@@ -364,6 +375,7 @@ class CurveletFrequencyGrid():
         """
         Reverses the wrapping.
         Puts the small L1xL2 wedge back into the big N x N grid at the correct position.
+        Uses Cython optimized code if available.
 
         INPUTS:
             wrapped_data: 2D array, compact coefficient data
@@ -374,6 +386,20 @@ class CurveletFrequencyGrid():
             unwrapped_grid: 2D array, full size grid with wedge placed correctly
         """
         nrows, ncols = wrapped_data.shape
+        
+        cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
+
+        # Fast path, if Cython available
+        if CYTHON_AVILABLE:
+            # Create a blank grid and let C accumulate the wedge onto it
+            # Handles complex vs float via fused types
+            big_grid = np.zeros((self.N, self.N), dtype=wrapped_data.dtype)
+
+            # Modify big grid in place
+            inner_loop.unwrap_wedge_fast(wrapped_data, big_grid, cy, cx, self.N)
+            return big_grid
+        
+        # Default to python implementation if cython not available
 
         # Create the target grid
         big_grid = np.zeros((self.N, self.N), dtype=complex)
@@ -385,8 +411,6 @@ class CurveletFrequencyGrid():
         big_grid[start_y:start_y + nrows, start_x:start_x + ncols] = wrapped_data
 
         # Determine shift
-        cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
-
         shift_y_center = (self.N // 2) - cy
         shift_x_center = (self.N // 2) - cx
 
