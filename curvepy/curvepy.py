@@ -14,29 +14,32 @@ class CurveletFrequencyGrid():
     """
     Class which handles geometric properties and transformations for the Fast Discrete Curvelet Transform (FDCT)
     """
-    def __init__(self, N: int, scales: int):
+    def __init__(self, nrows: int, ncols: int, scales: int):
         """
         Initialize the Grid.
         Pre-computes the coordinate systems (X, Y, R, Slopes) needed for the masks.
 
         INPUTS:
             N: int, image size (must be square, e.g. 512)
+            nrows: int, image row dimensions
+            ncols: int, image column dimensions
             scales: int, total number of scales (including the low-pass center)
         """
-        self.N = N
+        self.nrows = nrows
+        self.ncols = ncols
         self.scales = scales
         
         # Coordinate Grid (Use float to avoid integer division issues)
         # We use a slight offset or 'eps' to avoid division by zero errors in Slopes
-        self.Y, self.X = np.mgrid[-N//2:N//2, -N//2:N//2].astype(float)
+        x_coords = np.arange(- self.ncols // 2, self.ncols // 2)
+        y_coords = np.arange(- self.nrows // 2, self.nrows // 2)
+        self.Y, self.X = np.meshgrid(x_coords, y_coords, indexing='ij').astype(float)
         
         # Add epsilon to avoid divide-by-zero (inf is okay, but nan is annoying)
         self.X[self.X == 0] = 1e-10 
         self.Y[self.Y == 0] = 1e-10
 
-        # Pre-compute Radius and Slopes
-        # R = max(|x|, |y|) is the "L-infinity" norm used for square shells
-        self.R = np.maximum(np.abs(self.X), np.abs(self.Y))
+        # Slopes
         self.Slopes_EW = self.Y / self.X
         self.Slopes_NS = self.X / self.Y
 
@@ -57,31 +60,43 @@ class CurveletFrequencyGrid():
 
     def _get_scale_bounds(self, scale_idx: int):
         """
-        Returns the integer radius boundaries (inner, outer) for a scale.
+        Returns the integer radius boundaries rectangular limits (height_bounds, width_bounds).
         
         INPUTS:
             scale_idx: int, which scale to measure
 
         RETURNS:
-            bounds: Tuple(radius_inner, radius_outer), start and end of the ring
+            bounds_rows: Tuple(y_inner, y_outer)
+            bounds_cols: Tuple(x_inner, x_outer)
         """
-        center_idx = self.N // 2
         
         # Inverse logic: Scale 0 is coarsest, Scale (scales-1) is finest
         inverse_scale = (self.scales - 1) - scale_idx
         
-        # Outer boundary of this scale
-        radius_outer = self.N // (2 ** (inverse_scale + 1))
+        # Vertical row boundaries
+        row_outer = self.nrows // (2 ** (inverse_scale + 1))
         
         # Inner boundary (which is the outer boundary of the previous scale)
         # If scale_idx is 0, inner is 0.
         if scale_idx == 0:
-            radius_inner = 0
+            row_inner = 0
         else:
-            radius_inner = self.N // (2 ** (inverse_scale + 2))
+            row_inner = self.nrows // (2 ** (inverse_scale + 2))
         
-        bounds = max(1, int(radius_inner)), max(1, int(radius_outer))
-        return bounds
+        bounds_rows = max(1, int(row_inner)), max(1, int(row_outer))
+
+        # Horizontal column boundaries
+        col_outer = self.ncols // (2 ** (inverse_scale + 1))
+
+        # Inner boundary
+        if scale_idx == 0:
+            col_inner = 0
+        else:
+            col_inner = self.ncols // (2 ** (inverse_scale + 2))
+        
+        bounds_cols = max(1, int(col_inner)), max(1, int(col_outer))
+
+        return bounds_rows, bounds_cols
     
     def get_radial_window(self, scale_idx: int):
         """
@@ -94,7 +109,7 @@ class CurveletFrequencyGrid():
         RETURNS:
             mask: 2D array, the circular ring mask
         """
-        r_inner, r_outer = self._get_scale_bounds(scale_idx)
+        (r_inner_y, r_outer_y), (r_inner_x, r_outer_x) = self._get_scale_bounds(scale_idx)
 
         
         # Inner Low-Pass (Phi)
