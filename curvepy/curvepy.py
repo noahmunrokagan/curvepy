@@ -27,14 +27,18 @@ class CurveletFrequencyGrid():
         """
         self.nrows = nrows
         self.ncols = ncols
+        self.N = max(nrows, ncols)
         self.scales = scales
         
         # Coordinate Grid (Use float to avoid integer division issues)
         # We use a slight offset or 'eps' to avoid division by zero errors in Slopes
-        x_coords = np.arange(- self.ncols // 2, self.ncols // 2)
-        y_coords = np.arange(- self.nrows // 2, self.nrows // 2)
-        self.Y, self.X = np.meshgrid(x_coords, y_coords, indexing='ij').astype(float)
-        
+        r_rng = np.arange(-self.nrows // 2, self.nrows // 2)
+        c_rng = np.arange(-self.ncols // 2, self.ncols // 2)
+
+        # Pass rows FIRST, cols SECOND
+        self.Y, self.X = np.meshgrid(r_rng, c_rng, indexing='ij')
+        self.Y = self.Y.astype(float)
+        self.X = self.X.astype(float)
         # Add epsilon to avoid divide-by-zero (inf is okay, but nan is annoying)
         self.X[self.X == 0] = 1e-10 
         self.Y[self.Y == 0] = 1e-10
@@ -111,20 +115,27 @@ class CurveletFrequencyGrid():
         """
         (r_inner_y, r_outer_y), (r_inner_x, r_outer_x) = self._get_scale_bounds(scale_idx)
 
+        # Outer magnitude
+        # The creates the rectangular shell shape (L-infinity norm)
+        M_outer = np.maximum(np.abs(self.Y) / r_outer_y, np.abs(self.X) / r_outer_x)
         
-        # Inner Low-Pass (Phi)
+        # Coarsest scale, Low-Pass (Phi)
         if scale_idx == 0:
             # Coarsest scale is just the low-pass itself
-            return windows.meyer_phi(self.R / r_outer)
+            return windows.meyer_phi(M_outer)
         
+        # Inner magnitude
+        M_inner = np.maximum(np.abs(self.Y) / r_inner_y, np.abs(self.X) / r_inner_x)
+
+        # Windows
         if scale_idx == self.scales - 1:
-            phi_outer = np.ones_like(self.R, dtype=float)
+            phi_outer = np.ones_like(self.Y, dtype=float)
         else: 
             # We want the window to be 0 inside r_inner.
             # Phi(R/r_inner) is 1 inside r_inner.
-            phi_outer = windows.meyer_phi(self.R / r_outer)
+            phi_outer = windows.meyer_phi(M_outer)
         
-        phi_inner = windows.meyer_phi(self.R / r_inner)
+        phi_inner = windows.meyer_phi(M_inner)
             
         # The "Shell" is the region between them.
         mask = np.sqrt(np.maximum(0, phi_outer**2 - phi_inner**2)) 
@@ -188,7 +199,7 @@ class CurveletFrequencyGrid():
         RETURNS:
             P: 2D array, the normalization grid
         """
-        P = np.zeros((self.N, self.N), dtype=float)
+        P = np.zeros((self.nrows, self.ncols), dtype=float)
 
         for j in range(self.scales):
             for w in range(self._num_wedges_in_scale(j)):
@@ -282,7 +293,7 @@ class CurveletFrequencyGrid():
         boundaries = np.linspace(-1.0, 1.0, int(num_wedges) + 1)
         return boundaries
     
-    def get_wedge_dimensions(self, scale_idx):
+    def get_wedge_dimensions(self, scale_idx, base_len=None):
         """
         Returns optimal (L1, L2) rectangle size for a wedge at this scale.
         L1 is 'Length' (radial), L2 is 'Width' (Angular).
@@ -297,17 +308,21 @@ class CurveletFrequencyGrid():
         if scale_idx == 0:
             # Coarse scale is just a square in the center
             # Pad slightly for safety
-            _, radius_outer = self._get_scale_bounds(0)
-            assert radius_outer >= 2, "Lowpass outer radius too small—check scale bounds."
-            dimension = (radius_outer * 2) + 1
-            return int(dimension), int(dimension)
+            (r_inner_y, r_outer_y), (r_inner_x, r_outer_x) = self._get_scale_bounds(0)
+            assert r_outer_y >= 2 and r_outer_x >=2, "Lowpass outer radius too small—check scale bounds."
+            dimension_rows= (r_outer_y * 2) + 1
+            dimension_cols = (r_outer_x * 2) + 1
+            return int(dimension_rows), int(dimension_cols)
         
+        if base_len is None:
+            base_len = self.N
+
         # We use parabolic scaling for finer scales
         inverse_scale_idx = (self.scales - 1) - scale_idx
 
         # Dimensions derived from Candès et al. 2005
-        L1 = 4 * self.N // (2 ** (inverse_scale_idx + 2))
-        L2 = self.N // (2 ** (inverse_scale_idx//2 + 1)) # Parabolic scaling
+        L1 = 4 * base_len // (2 ** (inverse_scale_idx + 2))
+        L2 = base_len // (2 ** (inverse_scale_idx//2 + 1)) # Parabolic scaling
 
         return int(L1), int(L2)
     
@@ -347,40 +362,46 @@ class CurveletFrequencyGrid():
         RETURNS:
             small_wedge: 2D array, the compact wrapped data (L1 x L2)
         """
-        L1, L2 = self.get_wedge_dimensions(scale_idx)
-
         # Determine which quadrant
         boundaries = self._get_wedge_slope_ranges(scale_idx)
         wedges_per_quadrant = len(boundaries) - 1
         quadrant_idx = wedge_idx // wedges_per_quadrant
         quadrant_names = ["East", "North", "West", "South"]
         quadrant = quadrant_names[quadrant_idx]
-
-        # Swap dimensions for horizontal wedges (east/west)
+        
         if quadrant in ["East", "West"]:
-            nrows, ncols = L2, L1
+            # Horizontal wedges scale with the Column dimension (Width)
+            base_len = self.ncols
+            L1, L2 = self.get_wedge_dimensions(scale_idx, base_len)
+            nrows, ncols = L2, L1 # Swap for horizontal
         else:
+            # Vertical wedges scale with the Row dimension (Height)
+            base_len = self.nrows
+            L1, L2 = self.get_wedge_dimensions(scale_idx, base_len)
             nrows, ncols = L1, L2
-
 
         # Find the approximate center of the wedge (to be changed later)
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
+        
+        # Sanitize cy and cx for cython
+        cy = (cy % self.nrows) + self.nrows
+        cx = (cx % self.ncols) + self.ncols
 
         # Use optimized code if available
         if CYTHON_AVILABLE:
-            return inner_loop.wrap_wedge_fast(wedge_data, nrows, ncols, cy, cx, self.N)
+            return inner_loop.wrap_wedge_fast(wedge_data, nrows, ncols, cy, cx, self.nrows, self.ncols)
 
         # Default to python based implementation if Cython code not available
         # Cut out rectangle, handle indices moved by np.roll
-        shift_x_center = (self.N // 2) - cx
-        shift_y_center = (self.N // 2) - cy
+        shift_x_center = (self.ncols // 2) - cx
+        shift_y_center = (self.nrows // 2) - cy
 
         centered_data = np.roll(wedge_data, shift_y_center, axis=0)
         centered_data = np.roll(centered_data, shift_x_center, axis=1)
 
         # Slice middle pixels
-        start_x = (self.N // 2) - (ncols // 2)
-        start_y = (self.N // 2) - (nrows // 2)
+        start_x = (self.ncols // 2) - (ncols // 2)
+        start_y = (self.nrows // 2) - (nrows // 2)
 
         small_wedge = centered_data[start_y:start_y + nrows, start_x:start_x + ncols]
 
@@ -404,30 +425,34 @@ class CurveletFrequencyGrid():
         
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
 
+        # sanitze cx and cy for cython
+        cy = (cy % self.nrows) + self.nrows
+        cx = (cx % self.ncols) + self.ncols
+
         # Fast path, if Cython available
         if CYTHON_AVILABLE:
             # Create a blank grid and let C accumulate the wedge onto it
             # Handles complex vs float via fused types
-            big_grid = np.zeros((self.N, self.N), dtype=wrapped_data.dtype)
+            big_grid = np.zeros((self.nrows, self.ncols), dtype=wrapped_data.dtype)
 
             # Modify big grid in place
-            inner_loop.unwrap_wedge_fast(wrapped_data, big_grid, cy, cx, self.N)
+            inner_loop.unwrap_wedge_fast(wrapped_data, big_grid, cy, cx, self.nrows, self.ncols)
             return big_grid
         
         # Default to python implementation if cython not available
 
         # Create the target grid
-        big_grid = np.zeros((self.N, self.N), dtype=complex)
+        big_grid = np.zeros((self.nrows, self.ncols), dtype=complex)
 
         # Place small wedge in center of grid
-        start_y = (self.N // 2) - (nrows // 2)
-        start_x = (self.N // 2) - (ncols // 2)
+        start_y = (self.nrows // 2) - (nrows // 2)
+        start_x = (self.ncols // 2) - (ncols // 2)
 
         big_grid[start_y:start_y + nrows, start_x:start_x + ncols] = wrapped_data
 
         # Determine shift
-        shift_y_center = (self.N // 2) - cy
-        shift_x_center = (self.N // 2) - cx
+        shift_y_center = (self.nrows // 2) - cy
+        shift_x_center = (self.ncols // 2) - cx
 
         # Unroll
         unwrapped_grid = np.roll(big_grid, -shift_y_center, axis=0)
@@ -458,15 +483,16 @@ class CurveletFrequencyGrid():
                 mask = self.get_wedge_filter(0, 0)
                 data = image_frequency * mask
 
-                dimensions = self.get_wedge_dimensions(0) # Returns L x L for coarse rectangle
+                dim_rows, dim_cols = self.get_wedge_dimensions(0) # Returns L x L for coarse rectangle
 
                 # Cut out center (image already centered so crop is simple)
-                center_y, center_x = self.N // 2, self.N // 2
-                radius = dimensions[0] // 2
+                center_y, center_x = self.nrows // 2, self.ncols // 2
+                rad_y = dim_rows // 2
+                rad_x = dim_cols // 2
 
                 # Get slice indices
-                s_row = slice(center_y - radius, center_y + radius + 1)
-                s_col = slice(center_x - radius, center_x + radius + 1)
+                s_row = slice(center_y - rad_y, center_y + rad_y + 1)
+                s_col = slice(center_x - rad_x, center_x + rad_x+ 1)
 
                 wrapped_data = data[s_row, s_col]
 
@@ -514,7 +540,7 @@ class CurveletFrequencyGrid():
             reconstructed_image: 2D array, the restored image
         """
 
-        reconstructed_frequency = np.zeros((self.N, self.N), dtype=complex)
+        reconstructed_frequency = np.zeros((self.nrows, self.ncols), dtype=complex)
 
         for j, scale_coeffs in enumerate(coefficients):
 
@@ -523,17 +549,22 @@ class CurveletFrequencyGrid():
                 data = scale_coeffs[0]
                 frequency_data = np.fft.fftshift(np.fft.fft2(data))
 
-                # Uncrop to get back to center
-                L = frequency_data.shape[0]
-                temporary_grid = np.zeros((self.N, self.N), dtype=complex)
+                # 1. Get dimensions of the small lowpass grid
+                h_small, w_small = frequency_data.shape
+                
+                # 2. Prepare the big grid
+                temporary_grid = np.zeros((self.nrows, self.ncols), dtype=complex)
 
-                center = self.N // 2
-                radius = L // 2
+                # 3. Calculate Centers
+                cy, cx = self.nrows // 2, self.ncols // 2
+                ry, rx = h_small // 2, w_small // 2
 
-                s_row = slice(center - radius, center + radius + 1)
-                s_col = slice(center - radius, center + radius + 1)
-
-                # Handle odd/even shape mismatch
+                # 4. Define Slices (Center of big grid)
+                s_row = slice(cy - ry, cy + ry + 1)
+                s_col = slice(cx - rx, cx + rx + 1)
+                
+                # 5. Paste safely
+                # frequency_data is already centered, so we copy it whole.
                 temporary_grid[s_row, s_col] = frequency_data
 
                 # Apply window
@@ -564,7 +595,5 @@ class CurveletFrequencyGrid():
         reconstructed_image = np.fft.ifft2(np.fft.ifftshift(reconstructed_frequency))
 
         return np.real(reconstructed_image)
-
-
 
 
