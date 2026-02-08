@@ -1,26 +1,32 @@
-# curvepy/inner_loop.pyx
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
-
 import numpy as np
 cimport numpy as np
+from cython cimport floating
 
-# We use "fused types" to handle both float (real) and complex numbers efficiently
+# 1. Define Fused Type
 ctypedef fused numerical_type:
     np.float64_t
     np.complex128_t
 
+# 2. Wrap Wedge (Safe Signature)
+# We remove 'int' from arguments in 'def' to prevent C-compilation errors
+# regarding VLA initialization. We cast them to 'cdef int' immediately inside.
 def wrap_wedge_fast(numerical_type[:, :] full_grid, 
-                   int L1, int L2, 
-                   int cy, int cx, 
-                   int grid_rows, int grid_cols):
-    """
-    Direct memory copy for wrapping. 
-    Avoids rolling the full m x n array.
-    """
-    cdef int nrows = L1
-    cdef int ncols = L2
+                   L1, L2,          # <--- Removed 'int' type here
+                   cy, cx,          # <--- Removed 'int' type here
+                   img_rows, img_cols): # <--- Removed 'int' type here
     
-    # Allocate output array (small wedge)
+    # Cast to C integers for speed inside the function
+    cdef int c_L1 = L1
+    cdef int c_L2 = L2
+    cdef int c_cy = cy
+    cdef int c_cx = cx
+    cdef int c_img_rows = img_rows
+    cdef int c_img_cols = img_cols
+    
+    # Allocate output
+    cdef int nrows = c_L1
+    cdef int ncols = c_L2
+    
     cdef np.ndarray result_arr
     if numerical_type is np.float64_t:
         result_arr = np.zeros((nrows, ncols), dtype=np.float64)
@@ -29,43 +35,40 @@ def wrap_wedge_fast(numerical_type[:, :] full_grid,
         
     cdef numerical_type[:, :] result = result_arr
     
-    # Calculate offsets
-    # The "center" of the output is (nrows//2, ncols//2)
-    # The "center" of the input is (cy, cx)
-    
     cdef int r, c, src_r, src_c
     cdef int half_nrows = nrows // 2
     cdef int half_ncols = ncols // 2
     
-    # We iterate over the SMALL destination grid (The 32x64 wedge)
-    # Instead of the BIG source grid (The 512x512 image)
+    # The Loop
     for r in range(nrows):
         for c in range(ncols):
             
-            # 1. Where is this pixel relative to the wedge center?
-            # if r=0 (top), rel_y = -half_nrows
-            # if r=nrows (bottom), rel_y = +half_nrows
+            # Row Wrapping (Safe Double Modulo)
+            src_r = (c_cy + (r - half_nrows)) % c_img_rows
+            if src_r < 0:
+                src_r += c_img_rows
             
-            # 2. Where is that in the big grid?
-            # We want pixel (cy + rel_y, cx + rel_x)
-            # BUT: We must handle the periodic wrapping (The "Torus" topology)
+            # Col Wrapping (Safe Double Modulo)
+            src_c = (c_cx + (c - half_ncols)) % c_img_cols
+            if src_c < 0:
+                src_c += c_img_cols
             
-            src_r = (cy + (r - half_nrows)) % grid_rows
-            src_c = (cx + (c - half_ncols)) % grid_cols
-            
-            # 3. Direct Copy
             result[r, c] = full_grid[src_r, src_c]
             
     return result_arr
 
+# 3. Unwrap Wedge (Safe Signature)
 def unwrap_wedge_fast(numerical_type[:, :] wedge_data, 
                      numerical_type[:, :] target_grid,
-                     int cy, int cx,
-                     int grid_rows, int grid_cols):
-    """
-    Inverse operation: Pastes small wedge into big grid with wrapping.
-    Modifies target_grid in-place (accumulates).
-    """
+                     cy, cx,          # <--- Removed 'int'
+                     img_rows, img_cols): # <--- Removed 'int'
+    
+    # Cast to C integers
+    cdef int c_cy = cy
+    cdef int c_cx = cx
+    cdef int c_img_rows = img_rows
+    cdef int c_img_cols = img_cols
+
     cdef int nrows = wedge_data.shape[0]
     cdef int ncols = wedge_data.shape[1]
     
@@ -76,8 +79,15 @@ def unwrap_wedge_fast(numerical_type[:, :] wedge_data,
     for r in range(nrows):
         for c in range(ncols):
             
-            dst_r = (cy + (r - half_nrows)) % grid_rows
-            dst_c = (cx + (c - half_ncols)) % grid_cols
+            # Row Wrapping
+            dst_r = (c_cy + (r - half_nrows)) % c_img_rows
+            if dst_r < 0:
+                dst_r += c_img_rows
             
-            # Accumulate (Add to existing grid)
+            # Col Wrapping
+            dst_c = (c_cx + (c - half_ncols)) % c_img_cols
+            if dst_c < 0:
+                dst_c += c_img_cols
+            
+            # Accumulate
             target_grid[dst_r, dst_c] = target_grid[dst_r, dst_c] + wedge_data[r, c]
