@@ -447,7 +447,7 @@ class CurveletFrequencyGrid():
         # Default to python implementation if cython not available
 
         # Create the target grid
-        big_grid = np.zeros((self.nrows, self.ncols), dtype=complex)
+        big_grid = np.zeros((self.nrows, self.ncols), dtype=np.complex64)
 
         # Place small wedge in center of grid
         start_y = (self.nrows // 2) - (nrows // 2)
@@ -545,7 +545,7 @@ class CurveletFrequencyGrid():
             reconstructed_image: 2D array, the restored image
         """
 
-        reconstructed_frequency = np.zeros((self.nrows, self.ncols), dtype=complex)
+        reconstructed_frequency = np.zeros((self.nrows, self.ncols), dtype=np.complex64)
 
         for j, scale_coeffs in enumerate(coefficients):
 
@@ -558,7 +558,7 @@ class CurveletFrequencyGrid():
                 h_small, w_small = frequency_data.shape
                 
                 # 2. Prepare the big grid
-                temporary_grid = np.zeros((self.nrows, self.ncols), dtype=complex)
+                temporary_grid = np.zeros((self.nrows, self.ncols), dtype=np.complex64)
 
                 # 3. Calculate Centers
                 cy, cx = self.nrows // 2, self.ncols // 2
