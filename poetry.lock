@@ -231,6 +231,59 @@ unicode = ["unicodedata2 (>=17.0.0) ; python_version <= \"3.14\""]
 woff = ["brotli (>=1.0.1) ; platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; platform_python_implementation != \"CPython\"", "zopfli (>=0.1.4)"]
 
 [[package]]
+name = "h5py"
+version = "3.15.1"
+description = "Read and write HDF5 files from Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "h5py-3.15.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:67e59f6c2f19a32973a40f43d9a088ae324fe228c8366e25ebc57ceebf093a6b"},
+    {file = "h5py-3.15.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:0e2f471688402c3404fa4e13466e373e622fd4b74b47b56cfdff7cc688209422"},
+    {file = "h5py-3.15.1-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4c45802bcb711e128a6839cb6c01e9ac648dc55df045c9542a675c771f15c8d5"},
+    {file = "h5py-3.15.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:64ce3f6470adb87c06e3a8dd1b90e973699f1759ad79bfa70c230939bff356c9"},
+    {file = "h5py-3.15.1-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:4411c1867b9899a25e983fff56d820a66f52ac326bbe10c7cdf7d832c9dcd883"},
+    {file = "h5py-3.15.1-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:2cbc4104d3d4aca9d6db8c0c694555e255805bfeacf9eb1349bda871e26cacbe"},
+    {file = "h5py-3.15.1-cp310-cp310-win_amd64.whl", hash = "sha256:01f55111ca516f5568ae7a7fc8247dfce607de331b4467ee8a9a6ed14e5422c7"},
+    {file = "h5py-3.15.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:5aaa330bcbf2830150c50897ea5dcbed30b5b6d56897289846ac5b9e529ec243"},
+    {file = "h5py-3.15.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c970fb80001fffabb0109eaf95116c8e7c0d3ca2de854e0901e8a04c1f098509"},
+    {file = "h5py-3.15.1-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:80e5bb5b9508d5d9da09f81fd00abbb3f85da8143e56b1585d59bc8ceb1dba8b"},
+    {file = "h5py-3.15.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5b849ba619a066196169763c33f9f0f02e381156d61c03e000bb0100f9950faf"},
+    {file = "h5py-3.15.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:e7f6c841efd4e6e5b7e82222eaf90819927b6d256ab0f3aca29675601f654f3c"},
+    {file = "h5py-3.15.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:ca8a3a22458956ee7b40d8e39c9a9dc01f82933e4c030c964f8b875592f4d831"},
+    {file = "h5py-3.15.1-cp311-cp311-win_amd64.whl", hash = "sha256:550e51131376889656feec4aff2170efc054a7fe79eb1da3bb92e1625d1ac878"},
+    {file = "h5py-3.15.1-cp311-cp311-win_arm64.whl", hash = "sha256:b39239947cb36a819147fc19e86b618dcb0953d1cd969f5ed71fc0de60392427"},
+    {file = "h5py-3.15.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:316dd0f119734f324ca7ed10b5627a2de4ea42cc4dfbcedbee026aaa361c238c"},
+    {file = "h5py-3.15.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b51469890e58e85d5242e43aab29f5e9c7e526b951caab354f3ded4ac88e7b76"},
+    {file = "h5py-3.15.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8a33bfd5dfcea037196f7778534b1ff7e36a7f40a89e648c8f2967292eb6898e"},
+    {file = "h5py-3.15.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:25c8843fec43b2cc368aa15afa1cdf83fc5e17b1c4e10cd3771ef6c39b72e5ce"},
+    {file = "h5py-3.15.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:a308fd8681a864c04423c0324527237a0484e2611e3441f8089fd00ed56a8171"},
+    {file = "h5py-3.15.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:f4a016df3f4a8a14d573b496e4d1964deb380e26031fc85fb40e417e9131888a"},
+    {file = "h5py-3.15.1-cp312-cp312-win_amd64.whl", hash = "sha256:59b25cf02411bf12e14f803fef0b80886444c7fe21a5ad17c6a28d3f08098a1e"},
+    {file = "h5py-3.15.1-cp312-cp312-win_arm64.whl", hash = "sha256:61d5a58a9851e01ee61c932bbbb1c98fe20aba0a5674776600fb9a361c0aa652"},
+    {file = "h5py-3.15.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:c8440fd8bee9500c235ecb7aa1917a0389a2adb80c209fa1cc485bd70e0d94a5"},
+    {file = "h5py-3.15.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:ab2219dbc6fcdb6932f76b548e2b16f34a1f52b7666e998157a4dfc02e2c4123"},
+    {file = "h5py-3.15.1-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d8cb02c3a96255149ed3ac811eeea25b655d959c6dd5ce702c9a95ff11859eb5"},
+    {file = "h5py-3.15.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:121b2b7a4c1915d63737483b7bff14ef253020f617c2fb2811f67a4bed9ac5e8"},
+    {file = "h5py-3.15.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:59b0d63b318bf3cc06687def2b45afd75926bbc006f7b8cd2b1a231299fc8599"},
+    {file = "h5py-3.15.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:e02fe77a03f652500d8bff288cbf3675f742fc0411f5a628fa37116507dc7cc0"},
+    {file = "h5py-3.15.1-cp313-cp313-win_amd64.whl", hash = "sha256:dea78b092fd80a083563ed79a3171258d4a4d307492e7cf8b2313d464c82ba52"},
+    {file = "h5py-3.15.1-cp313-cp313-win_arm64.whl", hash = "sha256:c256254a8a81e2bddc0d376e23e2a6d2dc8a1e8a2261835ed8c1281a0744cd97"},
+    {file = "h5py-3.15.1-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:5f4fb0567eb8517c3ecd6b3c02c4f4e9da220c8932604960fd04e24ee1254763"},
+    {file = "h5py-3.15.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:954e480433e82d3872503104f9b285d369048c3a788b2b1a00e53d1c47c98dd2"},
+    {file = "h5py-3.15.1-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fd125c131889ebbef0849f4a0e29cf363b48aba42f228d08b4079913b576bb3a"},
+    {file = "h5py-3.15.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:28a20e1a4082a479b3d7db2169f3a5034af010b90842e75ebbf2e9e49eb4183e"},
+    {file = "h5py-3.15.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:fa8df5267f545b4946df8ca0d93d23382191018e4cda2deda4c2cedf9a010e13"},
+    {file = "h5py-3.15.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:99d374a21f7321a4c6ab327c4ab23bd925ad69821aeb53a1e75dd809d19f67fa"},
+    {file = "h5py-3.15.1-cp314-cp314-win_amd64.whl", hash = "sha256:9c73d1d7cdb97d5b17ae385153472ce118bed607e43be11e9a9deefaa54e0734"},
+    {file = "h5py-3.15.1-cp314-cp314-win_arm64.whl", hash = "sha256:a6d8c5a05a76aca9a494b4c53ce8a9c29023b7f64f625c6ce1841e92a362ccdf"},
+    {file = "h5py-3.15.1.tar.gz", hash = "sha256:c86e3ed45c4473564de55aa83b6fc9e5ead86578773dfbd93047380042e26b69"},
+]
+
+[package.dependencies]
+numpy = ">=1.21.2"
+
+[[package]]
 name = "imageio"
 version = "2.37.2"
 description = "Read and write images and video across all major formats. Supports scientific and volumetric data."
@@ -951,6 +1004,61 @@ doc = ["intersphinx_registry", "jupyterlite-pyodide-kernel", "jupyterlite-sphinx
 test = ["Cython", "array-api-strict (>=2.3.1)", "asv", "gmpy2", "hypothesis (>=6.30)", "meson", "mpmath", "ninja ; sys_platform != \"emscripten\"", "pooch", "pytest (>=8.0.0)", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
+name = "segyio"
+version = "1.9.14"
+description = "Simple & fast IO for SEG-Y files"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "segyio-1.9.14-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:55a16d0b1b3cb1f5fa565fa825ea3a0950974bb9262fe586f01799df9fcdf2c2"},
+    {file = "segyio-1.9.14-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:d9804fffcb7bcecf7a3f112a9a5dd4302b1aeeaf30a5762907fc9dae8955b8e3"},
+    {file = "segyio-1.9.14-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:6ee3e60aac75b73eb6de80d09b64b4664b1c65769713ec993403283d63cb27f9"},
+    {file = "segyio-1.9.14-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2b921d445c6d420885bbeef2b962313654052f7f8caf244cc2263b22c7feddbf"},
+    {file = "segyio-1.9.14-cp310-cp310-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:43cb65e8d5b2ea8784508a74fd695947d7112156752f99083d12a6c46eb84c06"},
+    {file = "segyio-1.9.14-cp310-cp310-win32.whl", hash = "sha256:5a431f918f1244a226c5cef10f8fe7f9c47b7573fdf45a7090a74d34a3828624"},
+    {file = "segyio-1.9.14-cp310-cp310-win_amd64.whl", hash = "sha256:2882d99ce713f58bd461651342c472ab0650973b0476efa329fd094968ff7bd3"},
+    {file = "segyio-1.9.14-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:322f09ae0aa28baebca32ef613f9d7f295b802c9687a6008184d3d1fe0472e94"},
+    {file = "segyio-1.9.14-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8ca10188a8c8eee212395b10cdc2c7eb8414a5cb4e969739d6978ca3a37447ab"},
+    {file = "segyio-1.9.14-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8c791573a2814d4e5a2b5a4088bd95a7292f605c296ea410e60eee5115f5a9d0"},
+    {file = "segyio-1.9.14-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:59c6dd897f3ec855bcd99ee622b3fcc076ae673c9aeef465c2d504bf6fed706b"},
+    {file = "segyio-1.9.14-cp311-cp311-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:f10efe525bd4e9bde5e5f75d96ee23fb5199b22d12dcee219450fdf693df1cbf"},
+    {file = "segyio-1.9.14-cp311-cp311-win32.whl", hash = "sha256:ed3c2b7a6478d4807756a9ce1ab414f100fbf62710ef29ddb0acd468505aa6cc"},
+    {file = "segyio-1.9.14-cp311-cp311-win_amd64.whl", hash = "sha256:3d884ac446344b61f7645a70e76673d8c62c8767a972accc48f7bbdbb09bc88e"},
+    {file = "segyio-1.9.14-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:73fef1fe4702d40e858d72eecb0572e30dfe6fba3fe37345e63657d8b02f87cc"},
+    {file = "segyio-1.9.14-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:ffb815f07ac8779ca8351f4f2fa178cc976cc96429c5f12b380d2d6b99c1f2b3"},
+    {file = "segyio-1.9.14-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9df92ecab169434cbf53ef381347d5b304211b97b79ad6dcd3fc4caf23ba5f20"},
+    {file = "segyio-1.9.14-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9e65e8f837b4cce93a50cfb95c86f5ca40d156837f2830a38479af20a631ffd6"},
+    {file = "segyio-1.9.14-cp312-cp312-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:6e6a58e4b56bd386a16953fcdfeb77a0b7e928d99dba9bbc6459edf1aa6af14a"},
+    {file = "segyio-1.9.14-cp312-cp312-win32.whl", hash = "sha256:79a3eba1d1cfb8faad5a91cae59bde361f13cbdf24224911a94706cc989e9d67"},
+    {file = "segyio-1.9.14-cp312-cp312-win_amd64.whl", hash = "sha256:b5fc644950fb561862c5bb163f78cde76ef0a273baf12438dae5104e38df92bd"},
+    {file = "segyio-1.9.14-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:f7f7add046d9338b1af4d922220c9dc120f72ff7961213f3f79d8025426d547f"},
+    {file = "segyio-1.9.14-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:543206a37db18cc2db5ed1cb07dd51ca9192fd017c22eabf517309e2d3ce7add"},
+    {file = "segyio-1.9.14-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:834065dafe99daa09f5d61c017719f00f012e3df40c3f19d7f275f75856a939a"},
+    {file = "segyio-1.9.14-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e32b1a34095c1a98ebcf7b590b53fd743f105943625a8814a7e47d6f36baf677"},
+    {file = "segyio-1.9.14-cp313-cp313-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:e9cc7223ae32b7942a34d94ed00d381ee4775fcff75ca6f97114ccc42da44c6b"},
+    {file = "segyio-1.9.14-cp313-cp313-win32.whl", hash = "sha256:d5931347ee3e813de111945c152bc570158436d6922f395939fb8c62d43a9d5d"},
+    {file = "segyio-1.9.14-cp313-cp313-win_amd64.whl", hash = "sha256:9bff5a236b0227756d3fd8092aec18f6f99bb9a1b5ac7b488d5c0c6b11c96dca"},
+    {file = "segyio-1.9.14-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:713a6c31fabb93c9934ee1c75d6aeb7417ac6d3f97a4f6ca4250cef66328a19a"},
+    {file = "segyio-1.9.14-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:694e9303c1b3fda0192a499d3c33f828b56b234f48211fab96a09e12d0b57471"},
+    {file = "segyio-1.9.14-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e10acf5d843ef4897f6e6103a166485ff119048a99729690465462f4ca4a1fb6"},
+    {file = "segyio-1.9.14-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4048277c66e2038d297e693d4d988f12d43f518b5b9c41c2f0bb50967d40b133"},
+    {file = "segyio-1.9.14-cp314-cp314-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:a942f30b26739e6f593f1e1caa336e6c30c8469de15ac6295e17c6c1eaa81bff"},
+    {file = "segyio-1.9.14-cp314-cp314-win32.whl", hash = "sha256:917983aea16dbea463baca0059bba7a34a2fbe9dcf8696640361b64ad4a94b7b"},
+    {file = "segyio-1.9.14-cp314-cp314-win_amd64.whl", hash = "sha256:98eb39270ef0a664343ebfba6098e8ad4cf65306a1783965ba66951666fd3c5e"},
+    {file = "segyio-1.9.14-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:b9855d049aced3b050ea7184cef79845153254704cc7d988a0de27a9787871a2"},
+    {file = "segyio-1.9.14-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:c120e5017ebd8551151dca508470ebe4732465de717e86f4ba93730a8240b2be"},
+    {file = "segyio-1.9.14-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:6956497d4ce67f0f9a6e3c8d7d97725134c48c669b74e582be7e70ee6c60c8ef"},
+    {file = "segyio-1.9.14-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e87f2984979fe92a0720848470f8487852f52eb94b8c517ff10c1e2da4663fe2"},
+    {file = "segyio-1.9.14-cp314-cp314t-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:8c93943f4b64d89c3356432b40b205fb1b98339d52884ec468dbe74858254390"},
+    {file = "segyio-1.9.14-cp314-cp314t-win32.whl", hash = "sha256:2f45b795c876415f5a5a3d364915f92bfab168d9d1f3f17414acb89b629b836a"},
+    {file = "segyio-1.9.14-cp314-cp314t-win_amd64.whl", hash = "sha256:c6d408d1ec52140b9e055ed581b06a43e44efb2ba3f7a7923d8b794cb7015a48"},
+]
+
+[package.dependencies]
+numpy = ">=1.10"
+
+[[package]]
 name = "setuptools"
 version = "80.10.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1009,4 +1117,4 @@ zarr = ["fsspec", "kerchunk", "zarr (>=3.1.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "743aa8b63b75b3b127541e5ed3f4f617f9390f2fc85517fb1d5f480c5fd48f69"
+content-hash = "2664680f017b97c6f9613fe8ae130069f0ac6e4b501b700ba377b9604d068f9d"
