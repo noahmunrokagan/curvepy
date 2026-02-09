@@ -32,6 +32,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.txt
 
 # --- Cython Generated C-files---
 curvepy/*.c
