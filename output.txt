@@ -1,0 +1,7 @@
+Curvepy accelerated with Cython
+[Standard Square] Shape: (256, 256) | MSE: 4.55e-32
+[Wide Rectangle] Shape: (128, 256) | MSE: 4.69e-32
+[Tall Rectangle] Shape: (256, 128) | MSE: 5.81e-32
+[Odd Dimensions] Shape: (127, 253) | MSE: 8.79e-32
+[Extreme Aspect Ratio] Shape: (32, 512) | MSE: 4.68e-32
+[Energy Check] Ratio: 1.000000
