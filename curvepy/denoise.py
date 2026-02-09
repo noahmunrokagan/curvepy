@@ -1,17 +1,85 @@
+import numpy as np
+import h5py
+import skimage.color as color
+from skimage.util import img_as_float
 from .curvepy import CurveletFrequencyGrid
 from .filters import soft_threshold, compute_thresholds, calculate_psnr
 
-import numpy as np
-import skimage.color as color
-from skimage.util import img_as_float
-
-class CurveletDenoise:
+class CurveletDenoiseBase:
     """
-    A wrapper that handles Color Space conversion and channel looping
+    Base class for generic Curvelet Denoising logic.
     """
     def __init__(self, fdct: CurveletFrequencyGrid):
         self.fdct = fdct
 
+    def _hard_threshold(self, coeffs, sigma_multiple):
+        """
+        Applies Hard Thresholding based on standard deviation.
+        Any coefficient less than (sigma_multiple * std_dev) is set to 0.
+        """
+        denoised_coeffs = []
+        total_coeffs = 0
+        zero_coeffs = 0
+
+        for scale_idx, scale in enumerate(coeffs):
+            new_scale = []
+            
+            # Skip the coarsest scale (low freq) - never threshold the "trend"
+            if scale_idx == 0:
+                denoised_coeffs.append(scale)
+                continue
+
+            for wedge in scale:
+                # Calculate noise level estimate for this specific wedge
+                # Using Median Absolute Deviation (MAD) is more robust than StdDev
+                sigma = np.median(np.abs(wedge)) / 0.6745
+                threshold = sigma * sigma_multiple
+                
+                # Apply Threshold
+                mask = np.abs(wedge) > threshold
+                new_wedge = wedge * mask
+                new_scale.append(new_wedge)
+                
+                # Stats
+                total_coeffs += wedge.size
+                zero_coeffs += wedge.size - np.count_nonzero(mask)
+
+            denoised_coeffs.append(new_scale)
+        
+        sparsity = (zero_coeffs / total_coeffs) * 100 if total_coeffs > 0 else 0
+        return denoised_coeffs, sparsity
+
+class SeismicDenoise(CurveletDenoiseBase):
+    """
+    Specialized for 2D Seismic Data (High Dynamic Range, Float32).
+    """
+    def denoise(self, image, sigma=3.0):
+        """
+        Denoises a 2D seismic slice.
+        
+        ARGS:
+            image: 2D numpy array
+            sigma: float, how aggressive to be (Standard Deviations).
+                   2.0 = Conservative, 3.0 = Standard, 4.0 = Aggressive.
+        
+        RETURNS:
+            denoised_image, sparsity_percent, denoised_coeffs
+        """
+        # 1. Forward Transform
+        coeffs = self.fdct.forward_transform(image)
+        
+        # 2. Threshold
+        denoised_coeffs, sparsity = self._hard_threshold(coeffs, sigma)
+        
+        # 3. Inverse Transform
+        restored = self.fdct.inverse_transform(denoised_coeffs)
+        
+        return restored, sparsity, denoised_coeffs
+
+class ImageDenoise(CurveletDenoiseBase):
+    """
+    Specialized for Standard Images (RGB, YUV conversion).
+    """
     def normalize_img(self, img):
         """
         Ensures image is float format (0.0 to 1.0).
@@ -23,7 +91,7 @@ class CurveletDenoise:
             float_img: array, converted image
         """
         return img_as_float(img)
-
+    
     def forward_yuv(self, rgb_image):
         """
         Converts RGB to YUV and runs Forward Transform on each channel.
@@ -93,8 +161,6 @@ class CurveletDenoise:
             new_coeffs.append(new_scale)
             
         return self.fdct.inverse_transform(new_coeffs)
-        
-
     
     def denoise(self, image, sigma, multiplier=3.0):
         """
@@ -151,6 +217,6 @@ class CurveletDenoise:
             return self.inverse_yuv(denoised_coeffs_all)
         else:
             raise ValueError("Image must be 2D (Gray) or 3D (RGB)")
-    
+        
     def calculate_psnr_rgb(self, original, restored):
         return calculate_psnr(original, restored)
