@@ -1,6 +1,7 @@
 # CurvePy: Fast Discrete Curvelet Transform (FDCT)
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Performance](https://img.shields.io/badge/performance-Cython%20Accelerated-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-active-success)
 
@@ -237,10 +238,6 @@ Transformation Process for Above Image
     * Notice the top of the helmet and the flag stripes are clearly visible because they are horizontal.
     * The vertical rocket boosters in the background are invisible. The horizontal needle doesn't notice the vertical lines.
 
-### **2. Add a "Visual Proofs" Section**
-Add this new section right after the **Usage** section (and before **Project Structure**). This is the best place to show off the files your script saves (`ant_denoising_proof.png`, etc.).
-
-```markdown
 ## Visual Proofs & Benchmarks
 
 ### 1. Physics Preservation (F-K Spectrum)
@@ -249,17 +246,17 @@ One of CurvePy's primary goals is to denoise without destroying the underlying p
 * **Center:** The denoised output.
 * **Right:** The Residual (Noise) containing no coherent structural energy.
 
-![ANT Denoising Proof](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/xcorrelation_denoising.png)
+![Denoising Proof](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/assets/xcorrelation_denoising.png)
 
 ### 2. Spectral Integrity
 Comparing the F-K (Frequency-Wavenumber) spectrum before and after denoising confirms that the relevant frequency content is preserved while incoherent noise is rejected.
 
-![FK Integrity](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/fk_integrity.png)
+![FK Integrity](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/assets/fk_integrity.png)
 
 ### 3. The Power of Sparsity
 Curvelets represent curve-like geometry extremely efficiently. As shown below, **95% of the signal energy** is often contained in a tiny fraction of the coefficients. This is the mechanism that allows for high-ratio compression.
 
-![Sparsity Curve](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/sparsity_curve.png)
+![Sparsity Curve](https://raw.githubusercontent.com/noahmunrokagan/curvepy/refs/heads/master/assets/sparsity_curve.png)
 **Summary:** By adding up thousands of these "Needles" at every possible angle and size, CurvePy reconstructs the perfect image—minus the noise.
 
 ## Licence
