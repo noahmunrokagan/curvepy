@@ -62,6 +62,7 @@ class CurveletFrequencyGrid():
 
 
 
+
     def _get_scale_bounds(self, scale_idx: int):
         """
         Returns the integer radius boundaries rectangular limits (height_bounds, width_bounds).
@@ -324,7 +325,7 @@ class CurveletFrequencyGrid():
         L1 = 4 * base_len // (2 ** (inverse_scale_idx + 2))
         L2 = base_len // (2 ** (inverse_scale_idx//2 + 1)) # Parabolic scaling
 
-        return int(L1), int(L2)
+        return int(L1) | 1, int(L2) | 1
     
     def _get_wedge_center(self, scale_idx, wedge_idx):
         """
@@ -379,6 +380,10 @@ class CurveletFrequencyGrid():
             base_len = self.nrows
             L1, L2 = self.get_wedge_dimensions(scale_idx, base_len)
             nrows, ncols = L1, L2
+
+        # CLAMP DIMENSIONS: Ensure wedge is never larger than the image itself
+        nrows = min(nrows, self.nrows)
+        ncols = min(ncols, self.ncols)
 
         # Find the approximate center of the wedge (to be changed later)
         cy, cx = self._get_wedge_center(scale_idx, wedge_idx)
