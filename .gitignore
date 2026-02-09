@@ -14,12 +14,13 @@ __pycache__/
 *.dylib
 *.dll
 
-# --- Distribution / Packaging ---
+# --- Distribution / Packaging / data ---
 .Python
 build/
 develop-eggs/
 dist/
 downloads/
+data/
 eggs/
 .eggs/
 lib/

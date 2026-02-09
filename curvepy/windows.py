@@ -3,7 +3,6 @@ windows.py
 Implements the Meyer Window functions for the Fast Discrete Curvelet Transform.
 """
 import numpy as np
-import matplotlib.pyplot as plt
 
 def meyer_auxiliary(x):
     """
