@@ -34,7 +34,7 @@ Curvepy uses a color denoising engine that operatues in the YUV color space (cho
 Clone the repository and install the dependencies:
 
 ```bash
-git clone [https://github.com/yourusername/curvepy.git](https://github.com/yourusername/curvepy.git)
+git clone https://github.com/noahmunrokagan/curvepy
 cd curvepy
 pip install -r requirements.txt
 ```

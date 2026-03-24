@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 dependencies = [
-    "numpy>=2.4.0,<3.0.0",
+    "numpy>=1.26.4,<3.0.0",
     "matplotlib>=3.10.8,<4.0.0",
     "pywavelets>=1.9.0,<2.0.0",
     "scikit-image>=0.26.0,<0.27.0",
